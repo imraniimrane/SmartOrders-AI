@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Smart Orders</title>
+<title>Smart Orders - Fully Functional</title>
 <style>
   :root {
     --cyan: #00bcd4;
@@ -167,6 +167,16 @@
     font-weight: 600;
     margin-top: 8px;
   }
+  p.message {
+    font-weight: 600;
+    margin-top: 4px;
+  }
+  p.message.error {
+    color: red;
+  }
+  p.message.success {
+    color: green;
+  }
 </style>
 </head>
 <body>
@@ -176,15 +186,16 @@
     <div>Smart Orders</div>
   </div>
   <nav>
-    <button class="tab-btn active" data-tab="database-tab">Database</button>
-    <button class="tab-btn" data-tab="settings-tab">Settings</button>
-    <button class="tab-btn" data-tab="account-tab">Account</button>
-    <button class="tab-btn" data-tab="collab-tab">Collab</button>
+    <button class="tab-btn" data-tab="database-tab" disabled>Database</button>
+    <button class="tab-btn" data-tab="settings-tab" disabled>Settings</button>
+    <button class="tab-btn" data-tab="account-tab" disabled>Account</button>
+    <button class="tab-btn" data-tab="collab-tab" disabled>Collab</button>
   </nav>
   <div id="auth-buttons">
     <button id="btn-login">Log In</button>
     <button id="btn-signup">Sign Up</button>
   </div>
+  <button id="btn-logout" class="btn-danger" style="display:none; margin-left: 15px;">Log Out</button>
 </header>
 
 <main>
@@ -194,7 +205,7 @@
     <input type="email" id="login-email" placeholder="Email" required />
     <input type="password" id="login-password" placeholder="Password" required />
     <button class="btn" id="login-submit">Log In</button>
-    <p id="login-msg" style="color:red;"></p>
+    <p id="login-msg" class="message error"></p>
   </section>
 
   <!-- SIGNUP FORM -->
@@ -203,11 +214,11 @@
     <input type="email" id="signup-email" placeholder="Email" required />
     <input type="password" id="signup-password" placeholder="Password (min 6 chars)" required />
     <button class="btn" id="signup-submit">Sign Up</button>
-    <p id="signup-msg" style="color:red;"></p>
+    <p id="signup-msg" class="message error"></p>
   </section>
 
   <!-- DATABASE TAB -->
-  <section id="database-tab" class="tab-content active">
+  <section id="database-tab" class="tab-content">
     <h2>Database</h2>
     <form id="db-form">
       <input type="text" id="client-name" placeholder="Client Name" required />
@@ -247,23 +258,16 @@
       <input type="text" id="email-subject" placeholder="Subject" required />
       <textarea id="email-message" placeholder="Your message..." rows="5" required></textarea>
       <button type="submit" class="btn">Send Email</button>
-      <div id="email-status"></div>
+      <p id="email-status"></p>
     </form>
-    <hr />
-    <h3>Extra Protection Email</h3>
-    <input type="email" id="extra-email" placeholder="Add extra protection email" />
-    <button id="extra-email-btn" class="btn-secondary">Send Verification Code</button>
-    <p id="extra-email-msg" style="color:green;"></p>
-    <hr />
-    <h3>Profile Picture</h3>
-    <input type="file" id="profile-pic-input" accept="image/*" />
   </section>
 
   <!-- ACCOUNT TAB -->
   <section id="account-tab" class="tab-content">
     <h2>Account</h2>
     <p>Email: <span id="account-email">Not logged in</span></p>
-    <button id="btn-logout" class="btn-danger">Log Out</button>
+    <label for="profile-pic-input">Update Profile Picture:</label>
+    <input type="file" id="profile-pic-input" accept="image/*" />
   </section>
 
   <!-- COLLAB TAB -->
@@ -273,9 +277,10 @@
   </section>
 </main>
 
-<script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
 <script>
-  emailjs.init('your_public_key_here'); // Replace with your EmailJS public key
+  // State
+  let currentUser = null;
+  let database = [];
 
   // Elements
   const tabs = document.querySelectorAll('nav button.tab-btn');
@@ -291,131 +296,139 @@
   const accountEmail = document.getElementById('account-email');
   const profilePic = document.getElementById('profile-pic');
   const profilePicInput = document.getElementById('profile-pic-input');
-
-  // Database form and table
   const dbForm = document.getElementById('db-form');
   const dbTableBody = document.querySelector('#db-table tbody');
   const exportBtn = document.getElementById('export-db');
   const importInput = document.getElementById('import-db');
-
-  // Settings elements
   const darkModeToggle = document.getElementById('dark-mode-toggle');
   const emailForm = document.getElementById('email-form');
   const emailStatus = document.getElementById('email-status');
-  const extraEmailBtn = document.getElementById('extra-email-btn');
-  const extraEmailInput = document.getElementById('extra-email');
-  const extraEmailMsg = document.getElementById('extra-email-msg');
 
-  // State
-  let currentUser = null;
-  let database = [];
-
-  // Helpers
-  function saveToStorage() {
-    localStorage.setItem('smartOrdersDatabase', JSON.stringify(database));
+  // Utilities
+  function saveUser() {
+    if(currentUser) localStorage.setItem('smartOrdersUser', JSON.stringify(currentUser));
+    else localStorage.removeItem('smartOrdersUser');
+  }
+  function loadUser() {
+    const userStr = localStorage.getItem('smartOrdersUser');
+    if (userStr) currentUser = JSON.parse(userStr);
   }
 
-  function loadFromStorage() {
-    const saved = localStorage.getItem('smartOrdersDatabase');
-    if (saved) {
+  function saveDatabase() {
+    localStorage.setItem('smartOrdersDatabase', JSON.stringify(database));
+  }
+  function loadDatabase() {
+    const dbStr = localStorage.getItem('smartOrdersDatabase');
+    if (dbStr) {
       try {
-        database = JSON.parse(saved);
+        database = JSON.parse(dbStr);
       } catch {
         database = [];
       }
     } else {
-      database = [];
+      // Initial demo data for testing
+      database = [
+        { clientName: "Alice", phoneNumber: "555-1234", product: "Widget A", quantity: 5 },
+        { clientName: "Bob", phoneNumber: "555-5678", product: "Gadget B", quantity: 2 }
+      ];
+      saveDatabase();
     }
   }
 
   function renderDatabase() {
     dbTableBody.innerHTML = '';
-    if (database.length === 0) {
-      dbTableBody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#666;">No entries yet</td></tr>';
+    if(database.length === 0){
+      dbTableBody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:#666;">No entries yet</td></tr>`;
       return;
     }
     database.forEach(entry => {
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td>${entry.clientName}</td>
-        <td>${entry.phoneNumber}</td>
-        <td>${entry.product}</td>
+        <td>${escapeHtml(entry.clientName)}</td>
+        <td>${escapeHtml(entry.phoneNumber)}</td>
+        <td>${escapeHtml(entry.product)}</td>
         <td>${entry.quantity}</td>
       `;
       dbTableBody.appendChild(tr);
     });
   }
 
-  // Auth (dummy demo, no backend)
+  // Sanitize text for HTML
+  function escapeHtml(text) {
+    if (!text) return '';
+    return text.replace(/[&<>"']/g, function(m) {
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m];
+    });
+  }
+
+  // Validate email format
+  function validateEmail(email) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  }
+
+  // Authentication (demo, no backend)
   function login(email, password) {
-    if (!validateEmail(email)) return 'Invalid email.';
-    if (!password || password.length < 6) return 'Password must be at least 6 characters.';
-    // Demo: Accept any email/password
+    if (!validateEmail(email)) return "Please enter a valid email.";
+    if (!password || password.length < 6) return "Password must be at least 6 characters.";
+    // Accept any email/pass for demo
     currentUser = { email };
-    localStorage.setItem('smartOrdersUser', JSON.stringify(currentUser));
+    saveUser();
     return null;
   }
-
   function signup(email, password) {
-    if (!validateEmail(email)) return 'Invalid email.';
-    if (!password || password.length < 6) return 'Password must be at least 6 characters.';
-    // Demo: Accept all signups
+    if (!validateEmail(email)) return "Please enter a valid email.";
+    if (!password || password.length < 6) return "Password must be at least 6 characters.";
+    // Accept any signup for demo
     currentUser = { email };
-    localStorage.setItem('smartOrdersUser', JSON.stringify(currentUser));
+    saveUser();
     return null;
   }
-
   function logout() {
     currentUser = null;
-    localStorage.removeItem('smartOrdersUser');
+    saveUser();
   }
 
+  // UI updates based on login state
   function updateUI() {
-    if (currentUser) {
-      authButtons.style.display = 'none';
-      loginForm.style.display = 'none';
-      signupForm.style.display = 'none';
+    if(currentUser) {
+      authButtons.style.display = "none";
+      loginForm.style.display = "none";
+      signupForm.style.display = "none";
       accountEmail.textContent = currentUser.email;
-      btnLogout.style.display = 'inline-block';
+      btnLogout.style.display = "inline-block";
       tabs.forEach(t => t.disabled = false);
+      // Default tab after login
+      showTab('database-tab');
     } else {
-      authButtons.style.display = 'flex';
-      loginForm.style.display = 'none';
-      signupForm.style.display = 'none';
-      accountEmail.textContent = 'Not logged in';
-      btnLogout.style.display = 'none';
+      authButtons.style.display = "flex";
+      btnLogout.style.display = "none";
       tabs.forEach(t => t.disabled = true);
-      // Force show login on logout
+      accountEmail.textContent = "Not logged in";
+      // Show login form by default
       showTab('login-form');
     }
   }
 
-  // Tabs
+  // Show one tab/section, hide others
   function showTab(tabName) {
     tabContents.forEach(c => {
       c.classList.toggle('active', c.id === tabName);
     });
     tabs.forEach(t => {
-      if (t.dataset.tab === tabName) t.classList.add('active');
-      else t.classList.remove('active');
+      t.classList.toggle('active', t.dataset.tab === tabName);
     });
   }
 
-  // Email validation
-  function validateEmail(email) {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  }
+  // Event handlers
 
-  // Event Listeners
-
-  // Tabs nav
+  // Tabs nav clicks
   tabs.forEach(tabBtn => {
     tabBtn.addEventListener('click', () => {
-      showTab(tabBtn.dataset.tab);
+      if (!tabBtn.disabled) showTab(tabBtn.dataset.tab);
     });
   });
 
-  // Login/signup buttons in header
+  // Auth buttons header
   btnLogin.addEventListener('click', () => {
     showTab('login-form');
   });
@@ -425,29 +438,31 @@
 
   // Login form submit
   document.getElementById('login-submit').addEventListener('click', () => {
+    loginMsg.textContent = "";
     const email = document.getElementById('login-email').value.trim();
     const password = document.getElementById('login-password').value.trim();
     const err = login(email, password);
     if (err) {
       loginMsg.textContent = err;
     } else {
-      loginMsg.textContent = '';
+      loginMsg.textContent = "";
       updateUI();
-      showTab('database-tab');
+      clearLoginForm();
     }
   });
 
   // Signup form submit
   document.getElementById('signup-submit').addEventListener('click', () => {
+    signupMsg.textContent = "";
     const email = document.getElementById('signup-email').value.trim();
     const password = document.getElementById('signup-password').value.trim();
     const err = signup(email, password);
     if (err) {
       signupMsg.textContent = err;
     } else {
-      signupMsg.textContent = '';
+      signupMsg.textContent = "";
       updateUI();
-      showTab('database-tab');
+      clearSignupForm();
     }
   });
 
@@ -457,11 +472,11 @@
     updateUI();
   });
 
-  // Database add form submit
-  dbForm.addEventListener('submit', (e) => {
+  // Database form submit
+  dbForm.addEventListener('submit', e => {
     e.preventDefault();
-    if (!currentUser) {
-      alert('Please log in to add entries.');
+    if(!currentUser) {
+      alert("Please log in to add entries.");
       return;
     }
     const clientName = document.getElementById('client-name').value.trim();
@@ -469,20 +484,20 @@
     const product = document.getElementById('product').value.trim();
     const quantity = parseInt(document.getElementById('quantity').value, 10);
 
-    if (!clientName || !phoneNumber || !product || !quantity || quantity < 1) {
-      alert('Please fill out all fields correctly.');
+    if(!clientName || !phoneNumber || !product || isNaN(quantity) || quantity < 1) {
+      alert("Please fill out all fields correctly.");
       return;
     }
     database.push({ clientName, phoneNumber, product, quantity });
-    saveToStorage();
+    saveDatabase();
     renderDatabase();
     dbForm.reset();
   });
 
-  // Export database JSON
+  // Export database
   exportBtn.addEventListener('click', () => {
-    if (database.length === 0) {
-      alert('Database is empty, nothing to export.');
+    if(database.length === 0) {
+      alert("Database is empty, nothing to export.");
       return;
     }
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(database, null, 2));
@@ -495,117 +510,124 @@
   });
 
   // Import database JSON
-  importInput.addEventListener('change', (e) => {
+  importInput.addEventListener('change', e => {
     const file = e.target.files[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = evt => {
       try {
-        const importedData = JSON.parse(event.target.result);
-        if (!Array.isArray(importedData)) throw new Error('Invalid format');
+        const importedData = JSON.parse(evt.target.result);
+        if(!Array.isArray(importedData)) throw new Error("Invalid format");
+        // Simple validation of fields
+        for(const item of importedData) {
+          if(typeof item.clientName !== 'string' ||
+             typeof item.phoneNumber !== 'string' ||
+             typeof item.product !== 'string' ||
+             typeof item.quantity !== 'number') {
+            throw new Error("Invalid data entry");
+          }
+        }
         database = importedData;
-        saveToStorage();
+        saveDatabase();
         renderDatabase();
-        alert('Database imported successfully!');
-      } catch (err) {
-        alert('Failed to import database: Invalid JSON.');
+        alert("Database imported successfully!");
+      } catch {
+        alert("Failed to import database: invalid JSON or data format.");
       }
     };
     reader.readAsText(file);
-    e.target.value = null; // reset input
+    // Reset input for next import
+    importInput.value = "";
   });
 
   // Dark mode toggle
-  darkModeToggle.addEventListener('change', () => {
-    if (darkModeToggle.checked) {
+  darkModeToggle.addEventListener('change', e => {
+    if(e.target.checked) {
       document.body.classList.add('dark');
-      localStorage.setItem('darkMode', 'enabled');
+      localStorage.setItem('darkMode', 'true');
     } else {
       document.body.classList.remove('dark');
-      localStorage.removeItem('darkMode');
+      localStorage.setItem('darkMode', 'false');
     }
   });
 
   // Load dark mode preference
-  if (localStorage.getItem('darkMode') === 'enabled') {
-    darkModeToggle.checked = true;
-    document.body.classList.add('dark');
+  function loadDarkMode() {
+    if(localStorage.getItem('darkMode') === 'true') {
+      darkModeToggle.checked = true;
+      document.body.classList.add('dark');
+    } else {
+      darkModeToggle.checked = false;
+      document.body.classList.remove('dark');
+    }
   }
 
-  // Email sending via EmailJS
-  emailForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    emailStatus.style.color = 'black';
-    emailStatus.textContent = 'Sending...';
-
-    const toEmail = document.getElementById('email-to').value.trim();
-    const subject = document.getElementById('email-subject').value.trim();
-    const message = document.getElementById('email-message').value.trim();
-
-    if (!validateEmail(toEmail) || !subject || !message) {
-      emailStatus.style.color = 'red';
-      emailStatus.textContent = 'Please fill all fields correctly.';
-      return;
-    }
-
-    const templateParams = {
-      to_email: toEmail,
-      subject: subject,
-      message: message
-    };
-
-    emailjs.send('your_service_id', 'your_template_id', templateParams)
-      .then(() => {
-        emailStatus.style.color = 'green';
-        emailStatus.textContent = 'Email sent successfully!';
-        emailForm.reset();
-      })
-      .catch(() => {
-        emailStatus.style.color = 'red';
-        emailStatus.textContent = 'Failed to send email.';
-      });
-  });
-
-  // Extra email verification button (demo)
-  extraEmailBtn.addEventListener('click', () => {
-    const extraEmail = extraEmailInput.value.trim();
-    if (!validateEmail(extraEmail)) {
-      extraEmailMsg.style.color = 'red';
-      extraEmailMsg.textContent = 'Invalid email address.';
-      return;
-    }
-    extraEmailMsg.style.color = 'green';
-    extraEmailMsg.textContent = `Verification code sent to ${extraEmail} (demo).`;
-  });
-
-  // Profile picture update
-  profilePicInput.addEventListener('change', () => {
-    const file = profilePicInput.files[0];
-    if (!file) return;
+  // Profile picture update & persistence
+  profilePicInput.addEventListener('change', e => {
+    const file = e.target.files[0];
+    if(!file) return;
     const reader = new FileReader();
-    reader.onload = (e) => {
-      profilePic.src = e.target.result;
-      localStorage.setItem('profilePic', e.target.result);
+    reader.onload = evt => {
+      profilePic.src = evt.target.result;
+      // Save to localStorage (limited to size)
+      localStorage.setItem('profilePicData', evt.target.result);
     };
     reader.readAsDataURL(file);
   });
-
-  // Load profile pic from localStorage
-  const savedPic = localStorage.getItem('profilePic');
-  if (savedPic) profilePic.src = savedPic;
-
-  // Initialization
-  window.addEventListener('DOMContentLoaded', () => {
-    // Load user from storage
-    const savedUser = localStorage.getItem('smartOrdersUser');
-    if (savedUser) {
-      currentUser = JSON.parse(savedUser);
+  function loadProfilePic() {
+    const data = localStorage.getItem('profilePicData');
+    if(data) {
+      profilePic.src = data;
     }
-    // Load DB and render
-    loadFromStorage();
-    renderDatabase();
-    updateUI();
+  }
+
+  // Clear forms
+  function clearLoginForm() {
+    document.getElementById('login-email').value = '';
+    document.getElementById('login-password').value = '';
+    loginMsg.textContent = '';
+  }
+  function clearSignupForm() {
+    document.getElementById('signup-email').value = '';
+    document.getElementById('signup-password').value = '';
+    signupMsg.textContent = '';
+  }
+
+  // Email sending placeholder (replace with your real service)
+  emailForm.addEventListener('submit', e => {
+    e.preventDefault();
+    emailStatus.textContent = '';
+    const to = document.getElementById('email-to').value.trim();
+    const subject = document.getElementById('email-subject').value.trim();
+    const message = document.getElementById('email-message').value.trim();
+
+    if (!validateEmail(to)) {
+      emailStatus.textContent = "Please enter a valid recipient email.";
+      emailStatus.className = "message error";
+      return;
+    }
+    if (!subject || !message) {
+      emailStatus.textContent = "Subject and message cannot be empty.";
+      emailStatus.className = "message error";
+      return;
+    }
+
+    // Simulate sending email - Replace this with your real email sending logic
+    setTimeout(() => {
+      emailStatus.textContent = "Email sent successfully! (simulation)";
+      emailStatus.className = "message success";
+      emailForm.reset();
+    }, 1000);
   });
+
+  // Initial load
+  loadUser();
+  loadDatabase();
+  renderDatabase();
+  loadDarkMode();
+  loadProfilePic();
+  updateUI();
+
 </script>
 </body>
 </html>
