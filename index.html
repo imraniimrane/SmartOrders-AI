@@ -23,7 +23,6 @@
     background: var(--dark-bg);
     color: var(--dark-text);
   }
-  /* Top bar */
   header {
     display: flex;
     align-items: center;
@@ -66,7 +65,6 @@
   nav button.tab-btn.active {
     border-bottom: 3px solid white;
   }
-  /* Auth Buttons on right */
   #auth-buttons {
     display: flex;
     gap: 15px;
@@ -84,11 +82,9 @@
   #auth-buttons button:hover {
     background: #e0f7fa;
   }
-  /* Container */
   main {
     padding: 20px;
   }
-  /* Hide inactive tabs */
   .tab-content {
     display: none;
     max-width: 800px;
@@ -96,8 +92,6 @@
   .tab-content.active {
     display: block;
   }
-
-  /* Form inputs */
   input, select, textarea {
     width: 100%;
     padding: 8px 10px;
@@ -111,8 +105,6 @@
     border-color: var(--cyan);
     outline: none;
   }
-
-  /* Buttons */
   .btn {
     background: var(--cyan);
     color: white;
@@ -126,7 +118,6 @@
   .btn:hover {
     background: #0097a7;
   }
-  /* Secondary btn */
   .btn-secondary {
     background: #e0e0e0;
     color: var(--cyan);
@@ -134,8 +125,13 @@
   .btn-secondary:hover {
     background: #b2ebf2;
   }
-
-  /* Table styles */
+  .btn-danger {
+    background: #e53935;
+    color: white;
+  }
+  .btn-danger:hover {
+    background: #b71c1c;
+  }
   table {
     width: 100%;
     border-collapse: collapse;
@@ -153,8 +149,6 @@
   body.dark th {
     background: #007c91;
   }
-
-  /* Checkbox label */
   label.checkbox-label {
     display: flex;
     align-items: center;
@@ -166,24 +160,12 @@
     height: 18px;
     cursor: pointer;
   }
-
-  /* Profile pic upload */
   #profile-pic-input {
     margin-top: 6px;
   }
-
-  /* Email status */
   #email-status {
     font-weight: 600;
     margin-top: 8px;
-  }
-
-  /* Misc */
-  .danger {
-    background: #e53935;
-  }
-  .danger:hover {
-    background: #b71c1c;
   }
 </style>
 </head>
@@ -280,228 +262,350 @@
   <!-- ACCOUNT TAB -->
   <section id="account-tab" class="tab-content">
     <h2>Account</h2>
-    <button class="btn" id="save-data-btn">Save Data to Cloud</button>
-    <button class="btn" id="load-data-btn" style="margin-left:10px;">Load Data from Cloud</button>
-    <button class="btn-danger danger" id="delete-account-btn" style="margin-left:10px;">Delete Account & Data</button>
-    <button class="btn-secondary" id="logout-btn" style="margin-left:10px;">Log Out</button>
-    <p id="account-msg" style="margin-top:15px; font-weight:bold;"></p>
+    <p>Email: <span id="account-email">Not logged in</span></p>
+    <button id="btn-logout" class="btn-danger">Log Out</button>
   </section>
 
   <!-- COLLAB TAB -->
   <section id="collab-tab" class="tab-content">
-    <h2>Collab (Placeholder)</h2>
-    <p>This section is under development.</p>
+    <h2>Collaboration</h2>
+    <p>This feature is under construction.</p>
   </section>
 </main>
 
-<script src="https://cdn.emailjs.com/dist/email.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
 <script>
-  (function() {
-    emailjs.init('27xvHIt7kuuZewPB3');
-  })();
-</script>
+  emailjs.init('your_public_key_here'); // Replace with your EmailJS public key
 
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
-    // Initial State
-    let currentUser = null; // {email, profilePicDataUrl, database: [...]}
-    let database = [];
+  // Elements
+  const tabs = document.querySelectorAll('nav button.tab-btn');
+  const tabContents = document.querySelectorAll('.tab-content');
+  const authButtons = document.getElementById('auth-buttons');
+  const loginForm = document.getElementById('login-form');
+  const signupForm = document.getElementById('signup-form');
+  const loginMsg = document.getElementById('login-msg');
+  const signupMsg = document.getElementById('signup-msg');
+  const btnLogin = document.getElementById('btn-login');
+  const btnSignup = document.getElementById('btn-signup');
+  const btnLogout = document.getElementById('btn-logout');
+  const accountEmail = document.getElementById('account-email');
+  const profilePic = document.getElementById('profile-pic');
+  const profilePicInput = document.getElementById('profile-pic-input');
 
-    const tabs = document.querySelectorAll('button.tab-btn');
-    const tabContents = document.querySelectorAll('.tab-content');
-    const authButtons = document.getElementById('auth-buttons');
-    const profilePicImg = document.getElementById('profile-pic');
-    const logoSection = document.getElementById('logo-section');
+  // Database form and table
+  const dbForm = document.getElementById('db-form');
+  const dbTableBody = document.querySelector('#db-table tbody');
+  const exportBtn = document.getElementById('export-db');
+  const importInput = document.getElementById('import-db');
 
-    // Forms & UI elements
-    const loginForm = document.getElementById('login-form');
-    const signupForm = document.getElementById('signup-form');
-    const databaseTab = document.getElementById('database-tab');
-    const settingsTab = document.getElementById('settings-tab');
-    const accountTab = document.getElementById('account-tab');
-    const collabTab = document.getElementById('collab-tab');
+  // Settings elements
+  const darkModeToggle = document.getElementById('dark-mode-toggle');
+  const emailForm = document.getElementById('email-form');
+  const emailStatus = document.getElementById('email-status');
+  const extraEmailBtn = document.getElementById('extra-email-btn');
+  const extraEmailInput = document.getElementById('extra-email');
+  const extraEmailMsg = document.getElementById('extra-email-msg');
 
-    const loginEmailInput = document.getElementById('login-email');
-    const loginPasswordInput = document.getElementById('login-password');
-    const loginMsg = document.getElementById('login-msg');
+  // State
+  let currentUser = null;
+  let database = [];
 
-    const signupEmailInput = document.getElementById('signup-email');
-    const signupPasswordInput = document.getElementById('signup-password');
-    const signupMsg = document.getElementById('signup-msg');
+  // Helpers
+  function saveToStorage() {
+    localStorage.setItem('smartOrdersDatabase', JSON.stringify(database));
+  }
 
-    const dbForm = document.getElementById('db-form');
-    const dbTableBody = document.querySelector('#db-table tbody');
-    const exportDbBtn = document.getElementById('export-db');
-    const importDbInput = document.getElementById('import-db');
-
-    const darkModeToggle = document.getElementById('dark-mode-toggle');
-
-    const emailForm = document.getElementById('email-form');
-    const emailStatus = document.getElementById('email-status');
-
-    const extraEmailInput = document.getElementById('extra-email');
-    const extraEmailBtn = document.getElementById('extra-email-btn');
-    const extraEmailMsg = document.getElementById('extra-email-msg');
-
-    const profilePicInput = document.getElementById('profile-pic-input');
-
-    const saveDataBtn = document.getElementById('save-data-btn');
-    const loadDataBtn = document.getElementById('load-data-btn');
-    const deleteAccountBtn = document.getElementById('delete-account-btn');
-    const logoutBtn = document.getElementById('logout-btn');
-    const accountMsg = document.getElementById('account-msg');
-
-    // Auth Buttons
-    const btnLogin = document.getElementById('btn-login');
-    const btnSignup = document.getElementById('btn-signup');
-
-    // Utils - fake cloud save using localStorage for demo
-    function saveUserToCloud(user) {
-      localStorage.setItem('smartOrdersUser_' + user.email, JSON.stringify(user));
-    }
-    function loadUserFromCloud(email) {
-      const data = localStorage.getItem('smartOrdersUser_' + email);
-      if (!data) return null;
-      return JSON.parse(data);
-    }
-    function deleteUserFromCloud(email) {
-      localStorage.removeItem('smartOrdersUser_' + email);
-    }
-
-    // Update UI on login/logout
-    function updateUI() {
-      if(currentUser) {
-        authButtons.style.display = 'none';
-        // Show Database, Settings, Account tabs
-        tabs.forEach(t => t.style.display = 'inline-block');
-        // Show database tab active, hide login/signup forms
-        showTab('database-tab');
-        // Show profile pic if exists
-        if(currentUser.profilePicDataUrl) {
-          profilePicImg.src = currentUser.profilePicDataUrl;
-        } else {
-          profilePicImg.src = 'https://i.pravatar.cc/36';
-        }
-        // Load database from user
-        database = currentUser.database || [];
-        renderDatabase();
-        loginForm.classList.remove('active');
-        signupForm.classList.remove('active');
-      } else {
-        // No user logged in
-        authButtons.style.display = 'flex';
-        tabs.forEach(t => t.style.display = 'none');
-        hideAllTabs();
-        // Show login form by default
-        loginForm.classList.add('active');
-        signupForm.classList.remove('active');
-        profilePicImg.src = 'https://i.pravatar.cc/36';
+  function loadFromStorage() {
+    const saved = localStorage.getItem('smartOrdersDatabase');
+    if (saved) {
+      try {
+        database = JSON.parse(saved);
+      } catch {
         database = [];
-        renderDatabase();
       }
+    } else {
+      database = [];
     }
+  }
 
-    function showTab(id) {
-      tabContents.forEach(c => c.classList.remove('active'));
-      document.getElementById(id).classList.add('active');
-
-      tabs.forEach(t => {
-        if(t.dataset.tab === id) {
-          t.classList.add('active');
-        } else {
-          t.classList.remove('active');
-        }
-      });
+  function renderDatabase() {
+    dbTableBody.innerHTML = '';
+    if (database.length === 0) {
+      dbTableBody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#666;">No entries yet</td></tr>';
+      return;
     }
+    database.forEach(entry => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${entry.clientName}</td>
+        <td>${entry.phoneNumber}</td>
+        <td>${entry.product}</td>
+        <td>${entry.quantity}</td>
+      `;
+      dbTableBody.appendChild(tr);
+    });
+  }
 
-    function hideAllTabs() {
-      tabContents.forEach(c => c.classList.remove('active'));
+  // Auth (dummy demo, no backend)
+  function login(email, password) {
+    if (!validateEmail(email)) return 'Invalid email.';
+    if (!password || password.length < 6) return 'Password must be at least 6 characters.';
+    // Demo: Accept any email/password
+    currentUser = { email };
+    localStorage.setItem('smartOrdersUser', JSON.stringify(currentUser));
+    return null;
+  }
+
+  function signup(email, password) {
+    if (!validateEmail(email)) return 'Invalid email.';
+    if (!password || password.length < 6) return 'Password must be at least 6 characters.';
+    // Demo: Accept all signups
+    currentUser = { email };
+    localStorage.setItem('smartOrdersUser', JSON.stringify(currentUser));
+    return null;
+  }
+
+  function logout() {
+    currentUser = null;
+    localStorage.removeItem('smartOrdersUser');
+  }
+
+  function updateUI() {
+    if (currentUser) {
+      authButtons.style.display = 'none';
+      loginForm.style.display = 'none';
+      signupForm.style.display = 'none';
+      accountEmail.textContent = currentUser.email;
+      btnLogout.style.display = 'inline-block';
+      tabs.forEach(t => t.disabled = false);
+    } else {
+      authButtons.style.display = 'flex';
+      loginForm.style.display = 'none';
+      signupForm.style.display = 'none';
+      accountEmail.textContent = 'Not logged in';
+      btnLogout.style.display = 'none';
+      tabs.forEach(t => t.disabled = true);
+      // Force show login on logout
+      showTab('login-form');
     }
+  }
 
-    // Tab button clicks
-    tabs.forEach(tab => {
-      tab.addEventListener('click', () => {
-        if(!currentUser) return; // no switching tabs without login
-        showTab(tab.dataset.tab);
-      });
+  // Tabs
+  function showTab(tabName) {
+    tabContents.forEach(c => {
+      c.classList.toggle('active', c.id === tabName);
     });
-
-    // Auth buttons clicks
-    btnLogin.addEventListener('click', () => {
-      loginForm.classList.add('active');
-      signupForm.classList.remove('active');
-      hideAllTabs();
+    tabs.forEach(t => {
+      if (t.dataset.tab === tabName) t.classList.add('active');
+      else t.classList.remove('active');
     });
-    btnSignup.addEventListener('click', () => {
-      signupForm.classList.add('active');
-      loginForm.classList.remove('active');
-      hideAllTabs();
+  }
+
+  // Email validation
+  function validateEmail(email) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  }
+
+  // Event Listeners
+
+  // Tabs nav
+  tabs.forEach(tabBtn => {
+    tabBtn.addEventListener('click', () => {
+      showTab(tabBtn.dataset.tab);
     });
+  });
 
-    // Signup submit
-    document.getElementById('signup-submit').addEventListener('click', () => {
-      const email = signupEmailInput.value.trim().toLowerCase();
-      const pass = signupPasswordInput.value;
-      signupMsg.textContent = '';
+  // Login/signup buttons in header
+  btnLogin.addEventListener('click', () => {
+    showTab('login-form');
+  });
+  btnSignup.addEventListener('click', () => {
+    showTab('signup-form');
+  });
 
-      if (!validateEmail(email)) {
-        signupMsg.textContent = 'Invalid email.';
-        return;
-      }
-      if(pass.length < 6){
-        signupMsg.textContent = 'Password too short.';
-        return;
-      }
-      // Check if user exists
-      if(loadUserFromCloud(email)) {
-        signupMsg.textContent = 'Email already registered.';
-        return;
-      }
-      // Create new user
-      currentUser = {
-        email,
-        password: pass,
-        profilePicDataUrl: '',
-        database: []
-      };
-      saveUserToCloud(currentUser);
-      signupMsg.style.color = 'green';
-      signupMsg.textContent = 'Account created! Logging in...';
-      setTimeout(() => {
-        signupMsg.textContent = '';
-        updateUI();
-      }, 1000);
-    });
-
-    // Login submit
-    document.getElementById('login-submit').addEventListener('click', () => {
-      const email = loginEmailInput.value.trim().toLowerCase();
-      const pass = loginPasswordInput.value;
+  // Login form submit
+  document.getElementById('login-submit').addEventListener('click', () => {
+    const email = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-password').value.trim();
+    const err = login(email, password);
+    if (err) {
+      loginMsg.textContent = err;
+    } else {
       loginMsg.textContent = '';
-
-      const user = loadUserFromCloud(email);
-      if(!user) {
-        loginMsg.textContent = 'No such user.';
-        return;
-      }
-      if(user.password !== pass) {
-        loginMsg.textContent = 'Incorrect password.';
-        return;
-      }
-      currentUser = user;
       updateUI();
-    });
+      showTab('database-tab');
+    }
+  });
 
-    // Log out
-    logoutBtn.addEventListener('click', () => {
-      currentUser = null;
+  // Signup form submit
+  document.getElementById('signup-submit').addEventListener('click', () => {
+    const email = document.getElementById('signup-email').value.trim();
+    const password = document.getElementById('signup-password').value.trim();
+    const err = signup(email, password);
+    if (err) {
+      signupMsg.textContent = err;
+    } else {
+      signupMsg.textContent = '';
       updateUI();
-    });
+      showTab('database-tab');
+    }
+  });
 
-    // Delete account and data
-    deleteAccountBtn.addEventListener('click', () => {
-      if(!currentUser) return;
-      if(confirm('Delete your account and all data? This cannot be undone.')) {
-        deleteUserFromCloud(currentUser.email);
-        currentUser = null;
-        updateUI();
+  // Logout button
+  btnLogout.addEventListener('click', () => {
+    logout();
+    updateUI();
+  });
+
+  // Database add form submit
+  dbForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (!currentUser) {
+      alert('Please log in to add entries.');
+      return;
+    }
+    const clientName = document.getElementById('client-name').value.trim();
+    const phoneNumber = document.getElementById('phone-number').value.trim();
+    const product = document.getElementById('product').value.trim();
+    const quantity = parseInt(document.getElementById('quantity').value, 10);
+
+    if (!clientName || !phoneNumber || !product || !quantity || quantity < 1) {
+      alert('Please fill out all fields correctly.');
+      return;
+    }
+    database.push({ clientName, phoneNumber, product, quantity });
+    saveToStorage();
+    renderDatabase();
+    dbForm.reset();
+  });
+
+  // Export database JSON
+  exportBtn.addEventListener('click', () => {
+    if (database.length === 0) {
+      alert('Database is empty, nothing to export.');
+      return;
+    }
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(database, null, 2));
+    const dlAnchor = document.createElement('a');
+    dlAnchor.setAttribute("href", dataStr);
+    dlAnchor.setAttribute("download", "smart_orders_database.json");
+    document.body.appendChild(dlAnchor);
+    dlAnchor.click();
+    dlAnchor.remove();
+  });
+
+  // Import database JSON
+  importInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const importedData = JSON.parse(event.target.result);
+        if (!Array.isArray(importedData)) throw new Error('Invalid format');
+        database = importedData;
+        saveToStorage();
+        renderDatabase();
+        alert('Database imported successfully!');
+      } catch (err) {
+        alert('Failed to import database: Invalid JSON.');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = null; // reset input
+  });
+
+  // Dark mode toggle
+  darkModeToggle.addEventListener('change', () => {
+    if (darkModeToggle.checked) {
+      document.body.classList.add('dark');
+      localStorage.setItem('darkMode', 'enabled');
+    } else {
+      document.body.classList.remove('dark');
+      localStorage.removeItem('darkMode');
+    }
+  });
+
+  // Load dark mode preference
+  if (localStorage.getItem('darkMode') === 'enabled') {
+    darkModeToggle.checked = true;
+    document.body.classList.add('dark');
+  }
+
+  // Email sending via EmailJS
+  emailForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    emailStatus.style.color = 'black';
+    emailStatus.textContent = 'Sending...';
+
+    const toEmail = document.getElementById('email-to').value.trim();
+    const subject = document.getElementById('email-subject').value.trim();
+    const message = document.getElementById('email-message').value.trim();
+
+    if (!validateEmail(toEmail) || !subject || !message) {
+      emailStatus.style.color = 'red';
+      emailStatus.textContent = 'Please fill all fields correctly.';
+      return;
+    }
+
+    const templateParams = {
+      to_email: toEmail,
+      subject: subject,
+      message: message
+    };
+
+    emailjs.send('your_service_id', 'your_template_id', templateParams)
+      .then(() => {
+        emailStatus.style.color = 'green';
+        emailStatus.textContent = 'Email sent successfully!';
+        emailForm.reset();
+      })
+      .catch(() => {
+        emailStatus.style.color = 'red';
+        emailStatus.textContent = 'Failed to send email.';
+      });
+  });
+
+  // Extra email verification button (demo)
+  extraEmailBtn.addEventListener('click', () => {
+    const extraEmail = extraEmailInput.value.trim();
+    if (!validateEmail(extraEmail)) {
+      extraEmailMsg.style.color = 'red';
+      extraEmailMsg.textContent = 'Invalid email address.';
+      return;
+    }
+    extraEmailMsg.style.color = 'green';
+    extraEmailMsg.textContent = `Verification code sent to ${extraEmail} (demo).`;
+  });
+
+  // Profile picture update
+  profilePicInput.addEventListener('change', () => {
+    const file = profilePicInput.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      profilePic.src = e.target.result;
+      localStorage.setItem('profilePic', e.target.result);
+    };
+    reader.readAsDataURL(file);
+  });
+
+  // Load profile pic from localStorage
+  const savedPic = localStorage.getItem('profilePic');
+  if (savedPic) profilePic.src = savedPic;
+
+  // Initialization
+  window.addEventListener('DOMContentLoaded', () => {
+    // Load user from storage
+    const savedUser = localStorage.getItem('smartOrdersUser');
+    if (savedUser) {
+      currentUser = JSON.parse(savedUser);
+    }
+    // Load DB and render
+    loadFromStorage();
+    renderDatabase();
+    updateUI();
+  });
+</script>
+</body>
+</html>
