@@ -2,270 +2,185 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Database Manager with JSON & Excel</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Smart Orders - Database Manager</title>
   <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
-    }
-    input, button {
-      padding: 5px 10px;
-      margin: 5px 0;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 15px;
-    }
-    th, td {
-      border: 1px solid #ddd;
-      padding: 8px;
-    }
-    th {
-      background: #f4f4f4;
-    }
-    button.delete-btn {
-      background: #e74c3c;
-      color: white;
-      border: none;
-      cursor: pointer;
-      padding: 5px 10px;
-      border-radius: 3px;
-    }
-    button.delete-btn:hover {
-      background: #c0392b;
-    }
-    .controls > * {
-      margin-right: 10px;
-    }
+    body { font-family: Arial, sans-serif; padding: 2rem; background: #f4f4f4; }
+    h1 { color: #007bff; }
+    input, button { padding: 8px; margin: 5px; }
+    table { width: 100%; margin-top: 1rem; border-collapse: collapse; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    .delete-btn { background: red; color: white; border: none; cursor: pointer; }
+    .btn { background: #007bff; color: white; border: none; cursor: pointer; }
   </style>
 </head>
 <body>
 
-  <h1>Database Manager</h1>
+  <h1>Smart Orders - Database Manager</h1>
 
-  <form id="add-form">
+  <form id="entry-form">
     <input type="text" id="name" placeholder="Name" required />
     <input type="email" id="email" placeholder="Email" required />
-    <button type="submit">Add Entry</button>
+    <button type="submit" class="btn">Add Entry</button>
   </form>
 
-  <div class="controls">
-    <button id="export-json">Export Database as JSON</button>
-    <button id="export-excel">Export Database as Excel</button>
-    <input type="file" id="import-db" accept=".json,.xlsx" />
-    <button id="clear-db">Clear Database</button>
-  </div>
+  <br />
 
-  <table id="db-table">
+  <button id="export-json" class="btn">📄 Export as JSON</button>
+  <button id="export-excel" class="btn">📊 Export as Excel</button>
+  <input type="file" id="import-file" accept=".json,.xlsx" />
+  <button id="clear-db" class="btn">🗑️ Clear Database</button>
+
+  <table>
     <thead>
-      <tr><th>Name</th><th>Email</th><th>Actions</th></tr>
+      <tr>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Actions</th>
+      </tr>
     </thead>
-    <tbody>
-      <!-- Database entries will go here -->
-    </tbody>
+    <tbody id="db-table-body"></tbody>
   </table>
 
   <script>
-    // Database array
     let database = [];
 
-    // DOM elements
-    const form = document.getElementById('add-form');
+    const form = document.getElementById('entry-form');
     const nameInput = document.getElementById('name');
     const emailInput = document.getElementById('email');
-    const tableBody = document.querySelector('#db-table tbody');
+    const tableBody = document.getElementById('db-table-body');
     const exportJsonBtn = document.getElementById('export-json');
     const exportExcelBtn = document.getElementById('export-excel');
-    const importInput = document.getElementById('import-db');
+    const importInput = document.getElementById('import-file');
     const clearDbBtn = document.getElementById('clear-db');
 
-    // Load database from localStorage on page load
-    function loadDatabase() {
-      const saved = localStorage.getItem('database');
-      if (saved) {
-        try {
-          database = JSON.parse(saved);
-        } catch {
-          database = [];
-        }
-      }
-    }
-
-
-    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
-
-<script>
-  function exportToExcel() {
-    if (!database || database.length === 0) {
-      alert("Database is empty.");
-      return;
-    }
-
-    const worksheet = XLSX.utils.json_to_sheet(database);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Database");
-
-    XLSX.writeFile(workbook, "smart_orders_database.xlsx");
-  }
-
-  document.getElementById("export-excel-btn").addEventListener("click", exportToExcel);
-</script>
-
-
-    // Save database to localStorage
     function saveDatabase() {
       localStorage.setItem('database', JSON.stringify(database));
     }
 
-    // Render the database table
+    function loadDatabase() {
+      const data = localStorage.getItem('database');
+      if (data) {
+        database = JSON.parse(data);
+      }
+    }
+
     function renderDatabase() {
       tableBody.innerHTML = '';
       database.forEach((entry, index) => {
         const tr = document.createElement('tr');
-
-        const tdName = document.createElement('td');
-        tdName.textContent = entry.name;
-        tr.appendChild(tdName);
-
-        const tdEmail = document.createElement('td');
-        tdEmail.textContent = entry.email;
-        tr.appendChild(tdEmail);
-
-        const tdActions = document.createElement('td');
-        const delBtn = document.createElement('button');
-        delBtn.textContent = 'Delete';
-        delBtn.className = 'delete-btn';
-        delBtn.addEventListener('click', () => {
-          if (confirm(`Delete entry for "${entry.name}"?`)) {
-            database.splice(index, 1);
-            saveDatabase();
-            renderDatabase();
-          }
-        });
-        tdActions.appendChild(delBtn);
-        tr.appendChild(tdActions);
-
+        tr.innerHTML = `
+          <td>${entry.name}</td>
+          <td>${entry.email}</td>
+          <td>
+            <button class="delete-btn" onclick="deleteEntry(${index})">Delete</button>
+          </td>
+        `;
         tableBody.appendChild(tr);
       });
     }
 
-    // Add new entry from form
+    function deleteEntry(index) {
+      if (confirm(`Delete entry for "${database[index].name}"?`)) {
+        database.splice(index, 1);
+        saveDatabase();
+        renderDatabase();
+      }
+    }
+
     form.addEventListener('submit', e => {
       e.preventDefault();
       const name = nameInput.value.trim();
       const email = emailInput.value.trim();
-
-      if (!name || !email) {
-        alert('Please fill in all fields.');
-        return;
-      }
-
-      // Simple email validation
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
-        alert('Please enter a valid email.');
+
+      if (!name || !email || !emailRegex.test(email)) {
+        alert('Please enter a valid name and email.');
         return;
       }
 
       database.push({ name, email });
       saveDatabase();
       renderDatabase();
-
       form.reset();
     });
 
-    // Export database as JSON
     exportJsonBtn.addEventListener('click', () => {
-      if (database.length === 0) {
-        alert('Database is empty.');
-        return;
-      }
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(database, null, 2));
+      if (database.length === 0) return alert("Database is empty.");
+      const blob = new Blob([JSON.stringify(database, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = dataStr;
-      a.download = 'database.json';
-      document.body.appendChild(a);
+      a.href = url;
+      a.download = "database.json";
       a.click();
-      a.remove();
+      URL.revokeObjectURL(url);
     });
 
-    // Export database as Excel (.xlsx)
     exportExcelBtn.addEventListener('click', () => {
-      if (database.length === 0) {
-        alert('Database is empty.');
-        return;
-      }
+      if (database.length === 0) return alert("Database is empty.");
       const ws = XLSX.utils.json_to_sheet(database);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Database");
       XLSX.writeFile(wb, "database.xlsx");
     });
 
-    // Import database file (JSON or Excel)
     importInput.addEventListener('change', e => {
       const file = e.target.files[0];
       if (!file) return;
 
       const reader = new FileReader();
-
       if (file.name.endsWith('.json')) {
         reader.onload = evt => {
           try {
-            const importedData = JSON.parse(evt.target.result);
-            if (Array.isArray(importedData)) {
-              database = importedData;
+            const data = JSON.parse(evt.target.result);
+            if (Array.isArray(data)) {
+              database = data;
               saveDatabase();
               renderDatabase();
-              alert('Database imported successfully from JSON.');
+              alert("Database imported from JSON.");
             } else {
-              alert('Invalid database format in JSON.');
+              alert("Invalid JSON format.");
             }
-          } catch (err) {
-            alert('Error parsing JSON file.');
+          } catch {
+            alert("Error parsing JSON.");
           }
         };
         reader.readAsText(file);
-
       } else if (file.name.endsWith('.xlsx')) {
         reader.onload = evt => {
           const data = new Uint8Array(evt.target.result);
-          const workbook = XLSX.read(data, { type: 'array' });
-          const firstSheetName = workbook.SheetNames[0];
-          const worksheet = workbook.Sheets[firstSheetName];
-          const importedData = XLSX.utils.sheet_to_json(worksheet);
-
-          if (Array.isArray(importedData)) {
-            database = importedData;
+          const workbook = XLSX.read(data, { type: "array" });
+          const sheet = workbook.Sheets[workbook.SheetNames[0]];
+          const json = XLSX.utils.sheet_to_json(sheet);
+          if (Array.isArray(json)) {
+            database = json;
             saveDatabase();
             renderDatabase();
-            alert('Database imported successfully from Excel.');
+            alert("Database imported from Excel.");
           } else {
-            alert('Invalid Excel format.');
+            alert("Invalid Excel format.");
           }
         };
         reader.readAsArrayBuffer(file);
-
       } else {
-        alert('Unsupported file type. Please upload JSON or Excel (.xlsx) files.');
+        alert("Unsupported file type.");
       }
 
-      e.target.value = ''; // Reset input
+      e.target.value = '';
     });
 
-    // Clear entire database
     clearDbBtn.addEventListener('click', () => {
-      if (confirm('Are you sure you want to clear the entire database?')) {
+      if (confirm("Clear the entire database?")) {
         database = [];
         saveDatabase();
         renderDatabase();
       }
     });
 
-    // Initial load & render
     loadDatabase();
     renderDatabase();
   </script>
+
 </body>
 </html>
