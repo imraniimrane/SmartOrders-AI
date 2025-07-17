@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Smart Orders</title>
 <style>
-  /* Reset */
   * {
     box-sizing: border-box;
   }
@@ -15,8 +14,6 @@
     background: #f0f4f8;
     color: #222;
   }
-
-  /* Top bar with cyan background */
   header.top-bar {
     background-color: #00bcd4;
     height: 56px;
@@ -25,14 +22,12 @@
     padding: 0 20px;
     user-select: none;
   }
-  .top-bar .title {
+  .title {
+    color: white;
     font-weight: 700;
     font-size: 1.3rem;
-    color: white;
     flex-grow: 1;
   }
-
-  /* Tabs container on the right side */
   nav.tabs {
     display: flex;
     gap: 24px;
@@ -45,19 +40,16 @@
     color: white;
     border-bottom: 3px solid transparent;
     transition: all 0.25s ease;
+    border-radius: 4px 4px 0 0;
   }
   nav.tabs .tab:hover {
     background-color: rgba(255 255 255 / 0.15);
-    border-radius: 4px 4px 0 0;
   }
   nav.tabs .tab.active {
     background-color: white;
     color: #00bcd4;
     border-bottom: 3px solid #00bcd4;
-    border-radius: 4px 4px 0 0;
   }
-
-  /* Content container */
   main.content {
     max-width: 900px;
     margin: 24px auto;
@@ -67,16 +59,12 @@
     box-shadow: 0 6px 16px rgb(0 0 0 / 0.1);
     min-height: 480px;
   }
-
-  /* Hide inactive tab content */
   .tab-content {
     display: none;
   }
   .tab-content.active {
     display: block;
   }
-
-  /* FORM STYLES */
   form label {
     display: block;
     margin-bottom: 10px;
@@ -118,8 +106,6 @@
     margin: 28px 0;
     border-color: #eee;
   }
-
-  /* Specific for Settings tab */
   #profilePreview {
     margin-top: 12px;
     max-width: 140px;
@@ -139,16 +125,12 @@
     text-decoration: underline;
     font-weight: 600;
   }
-
-  /* Danger buttons */
   .danger {
     background-color: #e74c3c;
   }
   .danger:hover {
     background-color: #c0392b;
   }
-
-  /* Dark mode styles (body.dark) */
   body.dark {
     background-color: #121212;
     color: #ddd;
@@ -203,14 +185,13 @@
   <nav class="tabs">
     <div class="tab active" data-tab="database">Database</div>
     <div class="tab" data-tab="settings">Settings</div>
-    <div class="tab" data-tab="account">Account</div>
+    <div class="tab" data-tab="account">ACCOUNT</div>
     <div class="tab" data-tab="collab">Collab</div>
   </nav>
 </header>
 
 <main class="content">
 
-  <!-- Database Tab -->
   <section id="database" class="tab-content active">
     <h2>Create Database</h2>
     <form id="dbForm">
@@ -240,7 +221,6 @@
     <input type="file" id="importInput" accept=".json" style="display:none;" />
   </section>
 
-  <!-- Settings Tab -->
   <section id="settings" class="tab-content">
     <h2>Settings</h2>
 
@@ -253,7 +233,7 @@
     <button id="aboutBtn">About</button><br /><br />
     <button id="emailUsBtn">Email Us</button><br /><br />
 
-    <label for="extraEmail">Add Email for Extra Protection (will send 6-digit code):</label>
+    <label for="extraEmail">Add Email for Extra Protection (sends a 6-digit code):</label>
     <input type="email" id="extraEmail" placeholder="Enter your email" />
 
     <button id="sendCodeBtn" style="margin-top:8px;">Send 6-digit code</button>
@@ -266,7 +246,6 @@
     <img id="profilePreview" alt="Profile Picture Preview" />
   </section>
 
-  <!-- Account Tab -->
   <section id="account" class="tab-content">
     <h2>Account</h2>
     <button id="saveDataBtn">Save Data</button><br /><br />
@@ -275,7 +254,6 @@
     <button id="deleteAccountBtn" class="danger">Delete Account and Data</button>
   </section>
 
-  <!-- Collab Tab -->
   <section id="collab" class="tab-content">
     <h2>Collab (Coming Soon)</h2>
     <p>This is a placeholder for collaboration features.</p>
@@ -391,7 +369,7 @@
     reader.readAsText(file);
   });
 
-  // Email related placeholders (About, Email Us, Send Code)
+  // About, Email Us, Send Code buttons
   document.getElementById('aboutBtn').addEventListener('click', () => {
     alert('Smart Orders v1.0\nDeveloped by Your Company.');
   });
@@ -406,11 +384,10 @@
       alert('Please enter an email address first.');
       return;
     }
-    // Placeholder for sending email with 6-digit code
     alert(`A 6-digit code has been sent to ${email} (simulated).`);
   });
 
-  // Account tab buttons placeholders
+  // Account tab buttons (placeholders)
   document.getElementById('saveDataBtn').addEventListener('click', () => {
     alert('Save data functionality coming soon.');
   });
@@ -421,12 +398,15 @@
     alert('Logged out successfully (simulated).');
   });
   document.getElementById('deleteAccountBtn').addEventListener('click', () => {
-    const confirmed = confirm('Are you sure you want to delete your account and all data? This action cannot be undone.');
-    if (confirmed) {
+    if(confirm('Are you sure you want to delete your account and all data? This action cannot be undone.')) {
       databaseEntries = [];
       alert('Account and data deleted (simulated).');
-      // Reset UI if needed
     }
+  });
+
+  // Clicking label opens file dialog for import
+  document.querySelector('label.file-label').addEventListener('click', () => {
+    importInput.click();
   });
 </script>
 
