@@ -1,245 +1,224 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SmartOrders with Firebase</title>
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import {
-      getDatabase,
-      ref,
-      set,
-      get,
-      child,
-      onValue
-    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Smart Orders</title>
+<style>
+  /* Reset & base */
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #f5f7fa;
+    color: #333;
+  }
+  /* Top bar */
+  .top-bar {
+    background-color: #00BCD4;
+    color: white;
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    height: 50px;
+    user-select: none;
+  }
+  .top-bar .title {
+    font-weight: 700;
+    font-size: 1.2rem;
+    flex-grow: 1;
+  }
+  /* Tabs container */
+  .tabs {
+    display: flex;
+    gap: 20px;
+  }
+  .tab {
+    cursor: pointer;
+    padding: 10px 12px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    border-radius: 4px 4px 0 0;
+    transition: background-color 0.25s, color 0.25s;
+    color: white;
+  }
+  .tab:hover {
+    background-color: rgba(255 255 255 / 0.2);
+  }
+  .tab.active {
+    background-color: white;
+    color: #00BCD4;
+    box-shadow: 0 -3px 0 0 #00BCD4 inset;
+  }
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyB5B9IwPyKg8OMLkgen9pJrqUQCTFIq2t8",
-      authDomain: "smartorders-ecee2.firebaseapp.com",
-      projectId: "smartorders-ecee2",
-      storageBucket: "smartorders-ecee2.appspot.com",
-      messagingSenderId: "1000988624105",
-      appId: "1:1000988624105:web:8a67c26609dc087b409c78",
-      databaseURL: "https://smartorders-ecee2-default-rtdb.firebaseio.com"
-    };
+  /* Content area */
+  .content {
+    background: white;
+    max-width: 900px;
+    margin: 20px auto;
+    border-radius: 8px;
+    padding: 25px 30px;
+    box-shadow: 0 4px 10px rgb(0 0 0 / 0.1);
+    min-height: 400px;
+  }
+  /* Hide all tab contents by default */
+  .tab-content {
+    display: none;
+  }
+  /* Show active tab content */
+  .tab-content.active {
+    display: block;
+  }
 
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-
-    const authPage = document.getElementById("auth-page");
-    const mainApp = document.getElementById("main-app");
-    const loginForm = document.getElementById("login-form");
-    const signupForm = document.getElementById("signup-form");
-    const loginUsernameInput = document.getElementById("login-username");
-    const loginPasswordInput = document.getElementById("login-password");
-    const signupUsernameInput = document.getElementById("signup-username");
-    const signupPasswordInput = document.getElementById("signup-password");
-    const rememberMe = document.getElementById("remember-me");
-    const btnLogout = document.getElementById("btn-logout");
-    const databaseSelect = document.getElementById("database-select");
-    const dbTableBody = document.getElementById("db-table-body");
-    const addDataForm = document.getElementById("add-data-form");
-    const inputName = document.getElementById("input-name");
-    const inputPhone = document.getElementById("input-phone");
-    const inputProduct = document.getElementById("input-product");
-    const inputQuantity = document.getElementById("input-quantity");
-    const exportArea = document.getElementById("export-area");
-    const btnExport = document.getElementById("btn-export");
-    const btnClearDb = document.getElementById("btn-clear-db");
-    const btnCreateDb = document.getElementById("btn-create-db");
-
-    let currentUser = null;
-    let currentDbName = "default";
-
-    function saveToFirebase() {
-      if (!currentUser) return;
-      const data = JSON.parse(localStorage.getItem("smartorders_data") || "{}");
-      set(ref(db, `users/${currentUser}`), data);
-    }
-
-    function loadFromFirebase(callback) {
-      if (!currentUser) return;
-      const userRef = ref(db, `users/${currentUser}`);
-      get(userRef).then(snapshot => {
-        if (snapshot.exists()) {
-          localStorage.setItem("smartorders_data", JSON.stringify(snapshot.val()));
-        }
-        callback();
-      });
-    }
-
-    function getUserData() {
-      return JSON.parse(localStorage.getItem("smartorders_data") || "{}");
-    }
-
-    function saveUserData(data) {
-      localStorage.setItem("smartorders_data", JSON.stringify(data));
-      saveToFirebase();
-    }
-
-    function renderDatabases() {
-      const userData = getUserData();
-      databaseSelect.innerHTML = "";
-      Object.keys(userData).forEach(name => {
-        const opt = document.createElement("option");
-        opt.value = name;
-        opt.textContent = name;
-        databaseSelect.appendChild(opt);
-      });
-      databaseSelect.value = currentDbName;
-      renderTable();
-    }
-
-    function renderTable() {
-      const dbData = getUserData()[currentDbName] || [];
-      dbTableBody.innerHTML = "";
-      dbData.forEach((entry, i) => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${entry.name}</td>
-          <td>${entry.phone}</td>
-          <td>${entry.product}</td>
-          <td>${entry.quantity}</td>
-          <td><button data-idx="${i}" class="btn-delete">Delete</button></td>
-        `;
-        dbTableBody.appendChild(tr);
-      });
-      dbTableBody.querySelectorAll(".btn-delete").forEach(btn => {
-        btn.onclick = () => {
-          const data = getUserData();
-          data[currentDbName].splice(btn.dataset.idx, 1);
-          saveUserData(data);
-          renderTable();
-        };
-      });
-    }
-
-    loginForm.onsubmit = e => {
-      e.preventDefault();
-      const u = loginUsernameInput.value;
-      const p = loginPasswordInput.value;
-      const users = JSON.parse(localStorage.getItem("smartorders_users") || "{}");
-      if (users[u] && users[u] === p) {
-        currentUser = u;
-        if (rememberMe.checked) {
-          localStorage.setItem("smartorders_remembered", JSON.stringify({ u, p }));
-        }
-        loadFromFirebase(() => {
-          authPage.style.display = "none";
-          mainApp.style.display = "block";
-          renderDatabases();
-        });
-      } else {
-        alert("Invalid credentials");
-      }
-    };
-
-    signupForm.onsubmit = e => {
-      e.preventDefault();
-      const u = signupUsernameInput.value;
-      const p = signupPasswordInput.value;
-      const users = JSON.parse(localStorage.getItem("smartorders_users") || "{}");
-      if (users[u]) return alert("Username taken");
-      users[u] = p;
-      localStorage.setItem("smartorders_users", JSON.stringify(users));
-      alert("Account created");
-    };
-
-    btnLogout.onclick = () => {
-      currentUser = null;
-      authPage.style.display = "block";
-      mainApp.style.display = "none";
-    };
-
-    databaseSelect.onchange = () => {
-      currentDbName = databaseSelect.value;
-      renderTable();
-    };
-
-    addDataForm.onsubmit = e => {
-      e.preventDefault();
-      const name = inputName.value.trim();
-      const phone = inputPhone.value.trim();
-      const product = inputProduct.value.trim();
-      const quantity = parseInt(inputQuantity.value.trim());
-      if (!name || !phone || !product || isNaN(quantity)) return alert("Invalid");
-      const data = getUserData();
-      if (!data[currentDbName]) data[currentDbName] = [];
-      data[currentDbName].push({ name, phone, product, quantity });
-      saveUserData(data);
-      addDataForm.reset();
-      renderTable();
-    };
-
-    btnCreateDb.onclick = () => {
-      const name = prompt("New database name:");
-      if (!name) return;
-      const data = getUserData();
-      if (data[name]) return alert("Exists");
-      data[name] = [];
-      saveUserData(data);
-      currentDbName = name;
-      renderDatabases();
-    };
-
-    btnExport.onclick = () => {
-      const data = getUserData();
-      exportArea.value = JSON.stringify(data[currentDbName], null, 2);
-    };
-
-    btnClearDb.onclick = () => {
-      if (!confirm("Are you sure?")) return;
-      const data = getUserData();
-      data[currentDbName] = [];
-      saveUserData(data);
-      renderTable();
-    };
-
-    window.onload = () => {
-      const rem = JSON.parse(localStorage.getItem("smartorders_remembered") || "null");
-      if (rem) {
-        loginUsernameInput.value = rem.u;
-        loginPasswordInput.value = rem.p;
-        rememberMe.checked = true;
-      }
-    };
-  </script>
+  /* Scroll bar fix */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #00BCD4;
+    border-radius: 10px;
+  }
+</style>
 </head>
 <body>
-  <div id="auth-page">
-    <form id="login-form">
-      <h2>Login</h2>
-      <input id="login-username" placeholder="Username" required />
-      <input id="login-password" placeholder="Password" type="password" required />
-      <label><input type="checkbox" id="remember-me" /> Remember Me</label>
-      <button>Login</button>
-    </form>
-    <form id="signup-form">
-      <h2>Signup</h2>
-      <input id="signup-username" placeholder="Username" required />
-      <input id="signup-password" placeholder="Password" type="password" required />
-      <button>Sign Up</button>
-    </form>
-  </div>
-  <div id="main-app" style="display:none">
-    <button id="btn-logout">Logout</button>
-    <select id="database-select"></select>
-    <button id="btn-create-db">+ New DB</button>
-    <form id="add-data-form">
-      <input id="input-name" placeholder="Name" required />
-      <input id="input-phone" placeholder="Phone" required />
-      <input id="input-product" placeholder="Product" required />
-      <input id="input-quantity" type="number" placeholder="Qty" required />
-      <button>Add</button>
-    </form>
-    <table>
-      <tbody id="db-table-body"></tbody>
-    </table>
-    <button id="btn-export">Export</button>
-    <button id="btn-clear-db">Clear</button>
-    <textarea id="export-area" style="width:100%; height:100px;"></textarea>
-  </div>
+
+  <header class="top-bar">
+    <div class="title">Smart Orders</div>
+    <nav class="tabs">
+      <div class="tab active" data-tab="database">Database</div>
+      <div class="tab" data-tab="settings">Settings</div>
+      <div class="tab" data-tab="account">Account</div>
+      <div class="tab" data-tab="collab">Collab</div>
+    </nav>
+  </header>
+
+  <main class="content">
+    <section id="database" class="tab-content active">
+      <h2>Create Database</h2>
+      <form>
+        <label>
+          Client Name:<br />
+          <input type="text" placeholder="Enter client name" />
+        </label><br /><br />
+        <label>
+          Phone Number:<br />
+          <input type="tel" placeholder="Enter phone number" />
+        </label><br /><br />
+        <label>
+          Product:<br />
+          <input type="text" placeholder="Enter product" />
+        </label><br /><br />
+        <label>
+          Quantity:<br />
+          <input type="number" min="1" placeholder="Enter quantity" />
+        </label><br /><br />
+        <button type="submit">Add to Database</button>
+      </form>
+      <hr />
+      <button id="exportBtn">Export Database</button>
+      <button id="downloadBtn">Download Database (.json)</button>
+      <br /><br />
+      <label for="importInput" style="cursor:pointer; color:#00BCD4; text-decoration: underline;">
+        Import Database (.json)
+      </label>
+      <input type="file" id="importInput" accept=".json" style="display:none" />
+    </section>
+
+    <section id="settings" class="tab-content">
+      <h2>Settings</h2>
+      <label>
+        <input type="checkbox" id="darkModeToggle" />
+        Dark Mode
+      </label>
+      <hr />
+      <button id="aboutBtn">About</button><br /><br />
+      <button id="emailUsBtn">Email Us</button><br /><br />
+      <label>
+        Add Email for Extra Protection:<br />
+        <input type="email" placeholder="Enter your email" id="extraEmail" />
+      </label>
+      <button id="sendCodeBtn">Send 6-digit code</button>
+      <hr />
+      <label>
+        Profile Picture:<br />
+        <input type="file" id="profilePicInput" accept="image/*" />
+      </label>
+      <br />
+      <img id="profilePreview" alt="Profile preview" style="margin-top:10px; max-width:150px; border-radius:50%; display:none;" />
+    </section>
+
+    <section id="account" class="tab-content">
+      <h2>Account</h2>
+      <button id="saveDataBtn">Save Data</button><br /><br />
+      <button id="loadDataBtn">Load Data</button><br /><br />
+      <button id="logoutBtn" style="color:#e74c3c;">Log Out</button><br /><br />
+      <button id="deleteAccountBtn" style="color:#e74c3c;">Delete Account and Data</button>
+    </section>
+
+    <section id="collab" class="tab-content">
+      <h2>Collaboration (Coming Soon)</h2>
+      <p>This feature is a placeholder for future collaboration tools.</p>
+    </section>
+  </main>
+
+<script>
+  // Tab switching
+  const tabs = document.querySelectorAll('.tab');
+  const contents = document.querySelectorAll('.tab-content');
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      // Remove active from all tabs and contents
+      tabs.forEach(t => t.classList.remove('active'));
+      contents.forEach(c => c.classList.remove('active'));
+      
+      // Activate clicked tab and content
+      tab.classList.add('active');
+      document.getElementById(tab.dataset.tab).classList.add('active');
+    });
+  });
+
+  // Dark Mode Toggle
+  const darkToggle = document.getElementById('darkModeToggle');
+  darkToggle.addEventListener('change', () => {
+    if (darkToggle.checked) {
+      document.body.style.background = '#121212';
+      document.body.style.color = '#ddd';
+      document.querySelector('.content').style.background = '#222';
+      document.querySelector('.top-bar').style.backgroundColor = '#0097A7';
+      tabs.forEach(tab => {
+        if (!tab.classList.contains('active')) {
+          tab.style.color = '#aaa';
+        }
+      });
+    } else {
+      document.body.style.background = '#f5f7fa';
+      document.body.style.color = '#333';
+      document.querySelector('.content').style.background = 'white';
+      document.querySelector('.top-bar').style.backgroundColor = '#00BCD4';
+      tabs.forEach(tab => {
+        tab.style.color = 'white';
+      });
+    }
+  });
+
+  // Profile picture preview
+  const profileInput = document.getElementById('profilePicInput');
+  const profilePreview = document.getElementById('profilePreview');
+
+  profileInput.addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (file) {
+      const url = URL.createObjectURL(file);
+      profilePreview.src = url;
+      profilePreview.style.display = 'block';
+    }
+  });
+
+  // (Placeholder) Export, Download, Import buttons can have real logic added later.
+</script>
+
 </body>
 </html>
