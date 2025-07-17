@@ -2,185 +2,91 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Smart Orders - Database Manager</title>
-  <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
-  <style>
-    body { font-family: Arial, sans-serif; padding: 2rem; background: #f4f4f4; }
-    h1 { color: #007bff; }
-    input, button { padding: 8px; margin: 5px; }
-    table { width: 100%; margin-top: 1rem; border-collapse: collapse; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-    .delete-btn { background: red; color: white; border: none; cursor: pointer; }
-    .btn { background: #007bff; color: white; border: none; cursor: pointer; }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smart Orders</title>
+  <script defer src="https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.5.0/firebase-database.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script defer src="./app.js"></script>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  <header class="header">
+    <div class="logo">
+      <img id="profile-pic" src="" alt="Profile" />
+      <h1>Smart Orders</h1>
+    </div>
+    <nav class="tabs">
+      <button data-tab="database">📁 Database</button>
+      <button data-tab="settings">⚙️ Settings</button>
+      <button data-tab="account">👤 Account</button>
+      <button disabled>🤝 Collab</button>
+    </nav>
+  </header>
 
-  <h1>Smart Orders - Database Manager</h1>
+  <main>
+    <section id="database" class="tab active">
+      <h2>Database Manager</h2>
+      <form id="entry-form">
+        <input type="text" id="name" placeholder="Name" required />
+        <input type="email" id="email" placeholder="Email" required />
+        <button type="submit">Add Entry</button>
+      </form>
 
-  <form id="entry-form">
-    <input type="text" id="name" placeholder="Name" required />
-    <input type="email" id="email" placeholder="Email" required />
-    <button type="submit" class="btn">Add Entry</button>
-  </form>
+      <div class="actions">
+        <button id="export-json">Export JSON</button>
+        <button id="export-excel">Export Excel</button>
+        <input type="file" id="import-file" />
+        <button id="clear-db">Clear Database</button>
+      </div>
 
-  <br />
+      <table>
+        <thead>
+          <tr><th>Name</th><th>Email</th><th>Actions</th></tr>
+        </thead>
+        <tbody id="db-table-body"></tbody>
+      </table>
+    </section>
 
-  <button id="export-json" class="btn">📄 Export as JSON</button>
-  <button id="export-excel" class="btn">📊 Export as Excel</button>
-  <input type="file" id="import-file" accept=".json,.xlsx" />
-  <button id="clear-db" class="btn">🗑️ Clear Database</button>
+    <section id="settings" class="tab">
+      <h2>Settings</h2>
+      <label>
+        <input type="checkbox" id="dark-mode-toggle" />
+        Enable Dark Mode
+      </label>
+      <p>Email us at <a href="mailto:smartordersofficial@gmail.com">smartordersofficial@gmail.com</a></p>
+      <div>
+        <label>Upload Profile Picture: <input type="file" id="upload-pic"></label>
+      </div>
+    </section>
 
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Email</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody id="db-table-body"></tbody>
-  </table>
+    <section id="account" class="tab">
+      <h2>Account</h2>
+      <button id="save-db">Save to Cloud</button>
+      <button id="load-db">Load from Cloud</button>
+      <button id="logout">Log Out</button>
+      <button id="delete-account">Delete Account</button>
+    </section>
+  </main>
 
   <script>
-    let database = [];
-
-    const form = document.getElementById('entry-form');
-    const nameInput = document.getElementById('name');
-    const emailInput = document.getElementById('email');
-    const tableBody = document.getElementById('db-table-body');
-    const exportJsonBtn = document.getElementById('export-json');
-    const exportExcelBtn = document.getElementById('export-excel');
-    const importInput = document.getElementById('import-file');
-    const clearDbBtn = document.getElementById('clear-db');
-
-    function saveDatabase() {
-      localStorage.setItem('database', JSON.stringify(database));
-    }
-
-    function loadDatabase() {
-      const data = localStorage.getItem('database');
-      if (data) {
-        database = JSON.parse(data);
-      }
-    }
-
-    function renderDatabase() {
-      tableBody.innerHTML = '';
-      database.forEach((entry, index) => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${entry.name}</td>
-          <td>${entry.email}</td>
-          <td>
-            <button class="delete-btn" onclick="deleteEntry(${index})">Delete</button>
-          </td>
-        `;
-        tableBody.appendChild(tr);
+    // Simple tab logic
+    document.querySelectorAll('.tabs button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+        document.getElementById(btn.dataset.tab).classList.add('active');
       });
-    }
-
-    function deleteEntry(index) {
-      if (confirm(`Delete entry for "${database[index].name}"?`)) {
-        database.splice(index, 1);
-        saveDatabase();
-        renderDatabase();
-      }
-    }
-
-    form.addEventListener('submit', e => {
-      e.preventDefault();
-      const name = nameInput.value.trim();
-      const email = emailInput.value.trim();
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-      if (!name || !email || !emailRegex.test(email)) {
-        alert('Please enter a valid name and email.');
-        return;
-      }
-
-      database.push({ name, email });
-      saveDatabase();
-      renderDatabase();
-      form.reset();
     });
 
-    exportJsonBtn.addEventListener('click', () => {
-      if (database.length === 0) return alert("Database is empty.");
-      const blob = new Blob([JSON.stringify(database, null, 2)], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = "database.json";
-      a.click();
-      URL.revokeObjectURL(url);
+    // Dark mode toggle
+    const darkToggle = document.getElementById('dark-mode-toggle');
+    darkToggle.checked = localStorage.getItem('dark') === 'true';
+    document.body.classList.toggle('dark', darkToggle.checked);
+    darkToggle.addEventListener('change', () => {
+      localStorage.setItem('dark', darkToggle.checked);
+      document.body.classList.toggle('dark', darkToggle.checked);
     });
-
-    exportExcelBtn.addEventListener('click', () => {
-      if (database.length === 0) return alert("Database is empty.");
-      const ws = XLSX.utils.json_to_sheet(database);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Database");
-      XLSX.writeFile(wb, "database.xlsx");
-    });
-
-    importInput.addEventListener('change', e => {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      if (file.name.endsWith('.json')) {
-        reader.onload = evt => {
-          try {
-            const data = JSON.parse(evt.target.result);
-            if (Array.isArray(data)) {
-              database = data;
-              saveDatabase();
-              renderDatabase();
-              alert("Database imported from JSON.");
-            } else {
-              alert("Invalid JSON format.");
-            }
-          } catch {
-            alert("Error parsing JSON.");
-          }
-        };
-        reader.readAsText(file);
-      } else if (file.name.endsWith('.xlsx')) {
-        reader.onload = evt => {
-          const data = new Uint8Array(evt.target.result);
-          const workbook = XLSX.read(data, { type: "array" });
-          const sheet = workbook.Sheets[workbook.SheetNames[0]];
-          const json = XLSX.utils.sheet_to_json(sheet);
-          if (Array.isArray(json)) {
-            database = json;
-            saveDatabase();
-            renderDatabase();
-            alert("Database imported from Excel.");
-          } else {
-            alert("Invalid Excel format.");
-          }
-        };
-        reader.readAsArrayBuffer(file);
-      } else {
-        alert("Unsupported file type.");
-      }
-
-      e.target.value = '';
-    });
-
-    clearDbBtn.addEventListener('click', () => {
-      if (confirm("Clear the entire database?")) {
-        database = [];
-        saveDatabase();
-        renderDatabase();
-      }
-    });
-
-    loadDatabase();
-    renderDatabase();
   </script>
-
 </body>
 </html>
