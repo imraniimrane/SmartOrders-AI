@@ -217,16 +217,41 @@
     <p id="signup-msg" class="message error"></p>
   </section>
 
-  <!-- DATABASE TAB -->
-  <section id="database-tab" class="tab-content">
-    <h2>Database</h2>
-    <form id="db-form">
-      <input type="text" id="client-name" placeholder="Client Name" required />
-      <input type="tel" id="phone-number" placeholder="Phone Number" required />
-      <input type="text" id="product" placeholder="Product" required />
-      <input type="number" id="quantity" placeholder="Quantity" min="1" required />
-      <button type="submit" class="btn">Add to Database</button>
-    </form>
+<!-- DATABASE TAB -->
+<section id="database-tab" class="tab-content">
+  <h2>Database</h2>
+  <form id="db-form">
+    <div id="entry-container">
+      <div class="entry">
+        <input type="text" name="client-name" placeholder="Client Name" required />
+        <input type="tel" name="phone-number" placeholder="Phone Number" required />
+        <input type="text" name="product" placeholder="Product" required />
+        <input type="number" name="quantity" placeholder="Quantity" min="1" required />
+      </div>
+    </div>
+    <button type="button" id="add-entry-btn" class="btn">+ Add Entry</button>
+    <button type="submit" class="btn">Add to Database</button>
+  </form>
+</section>
+
+<script>
+  document.getElementById('add-entry-btn').addEventListener('click', () => {
+    const container = document.getElementById('entry-container');
+
+    const entry = document.createElement('div');
+    entry.classList.add('entry');
+
+    entry.innerHTML = `
+      <input type="text" name="client-name" placeholder="Client Name" required />
+      <input type="tel" name="phone-number" placeholder="Phone Number" required />
+      <input type="text" name="product" placeholder="Product" required />
+      <input type="number" name="quantity" placeholder="Quantity" min="1" required />
+    `;
+
+    container.appendChild(entry);
+  });
+</script>
+
 
     <h3>Current Database</h3>
     <table id="db-table">
