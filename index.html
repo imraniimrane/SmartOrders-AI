@@ -1,659 +1,261 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Smart Orders - Fully Functional</title>
-<style>
-  :root {
-    --cyan: #00bcd4;
-    --dark-bg: #121212;
-    --light-bg: #f5f5f5;
-    --dark-text: #eee;
-    --light-text: #222;
-  }
-  body {
-    margin: 0;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: var(--light-bg);
-    color: var(--light-text);
-    transition: background 0.3s, color 0.3s;
-  }
-  body.dark {
-    background: var(--dark-bg);
-    color: var(--dark-text);
-  }
-  header {
-    display: flex;
-    align-items: center;
-    background: var(--cyan);
-    color: white;
-    padding: 10px 20px;
-  }
-  #logo-section {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-weight: 700;
-    font-size: 1.3rem;
-    user-select: none;
-  }
-  #profile-pic {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 2px solid white;
-  }
-  nav {
-    display: flex;
-    gap: 15px;
-    margin-left: 40px;
-    flex-grow: 1;
-  }
-  nav button.tab-btn {
-    background: transparent;
-    border: none;
-    color: white;
-    font-weight: 600;
-    font-size: 1rem;
-    padding: 8px 12px;
-    cursor: pointer;
-    border-bottom: 3px solid transparent;
-    transition: border-color 0.25s;
-  }
-  nav button.tab-btn.active {
-    border-bottom: 3px solid white;
-  }
-  #auth-buttons {
-    display: flex;
-    gap: 15px;
-  }
-  #auth-buttons button {
-    background: white;
-    color: var(--cyan);
-    border: none;
-    padding: 7px 15px;
-    font-weight: 600;
-    border-radius: 20px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-  }
-  #auth-buttons button:hover {
-    background: #e0f7fa;
-  }
-  main {
-    padding: 20px;
-  }
-  .tab-content {
-    display: none;
-    max-width: 800px;
-  }
-  .tab-content.active {
-    display: block;
-  }
-  input, select, textarea {
-    width: 100%;
-    padding: 8px 10px;
-    margin: 8px 0 16px;
-    border: 1.8px solid #ccc;
-    border-radius: 6px;
-    font-size: 1rem;
-    transition: border-color 0.25s;
-  }
-  input:focus, select:focus, textarea:focus {
-    border-color: var(--cyan);
-    outline: none;
-  }
-  .btn {
-    background: var(--cyan);
-    color: white;
-    border: none;
-    padding: 10px 18px;
-    border-radius: 24px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background-color 0.3s;
-  }
-  .btn:hover {
-    background: #0097a7;
-  }
-  .btn-secondary {
-    background: #e0e0e0;
-    color: var(--cyan);
-  }
-  .btn-secondary:hover {
-    background: #b2ebf2;
-  }
-  .btn-danger {
-    background: #e53935;
-    color: white;
-  }
-  .btn-danger:hover {
-    background: #b71c1c;
-  }
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 10px;
-  }
-  th, td {
-    border: 1.5px solid #ccc;
-    padding: 10px;
-    text-align: left;
-  }
-  th {
-    background: var(--cyan);
-    color: white;
-  }
-  body.dark th {
-    background: #007c91;
-  }
-  label.checkbox-label {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-weight: 600;
-  }
-  input[type="checkbox"] {
-    width: 18px;
-    height: 18px;
-    cursor: pointer;
-  }
-  #profile-pic-input {
-    margin-top: 6px;
-  }
-  #email-status {
-    font-weight: 600;
-    margin-top: 8px;
-  }
-  p.message {
-    font-weight: 600;
-    margin-top: 4px;
-  }
-  p.message.error {
-    color: red;
-  }
-  p.message.success {
-    color: green;
-  }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smart Orders</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      transition: background 0.3s, color 0.3s;
+    }
+    .header {
+      background-color: #00bcd4;
+      color: white;
+      padding: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .header h1 {
+      margin: 0;
+      font-size: 1.5rem;
+    }
+    .profile-pic {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid white;
+    }
+    .tabs {
+      display: flex;
+      justify-content: space-around;
+      background-color: #e0f7fa;
+      padding: 0.5rem 0;
+    }
+    .tab {
+      cursor: pointer;
+      padding: 0.5rem 1rem;
+    }
+    .tab-content {
+      display: none;
+      padding: 1rem;
+    }
+    .active {
+      display: block;
+    }
+    input, button {
+      display: block;
+      margin: 0.5rem 0;
+      padding: 0.5rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+    }
+    .dark-mode {
+      background: #121212;
+      color: #fff;
+    }
+    .dark-mode .tabs { background: #333; }
+    .dark-mode .tab-content { background: #222; }
+    .dark-mode input, .dark-mode button {
+      background: #444;
+      color: white;
+      border: 1px solid #555;
+    }
+  </style>
 </head>
 <body>
-<header>
-  <div id="logo-section">
-    <img id="profile-pic" src="https://i.pravatar.cc/36" alt="Profile Picture" />
-    <div>Smart Orders</div>
+  <div class="header">
+    <h1>Smart Orders</h1>
+    <img src="" alt="Profile Picture" id="profile-pic" class="profile-pic" />
   </div>
-  <nav>
-    <button class="tab-btn" data-tab="database-tab" disabled>Database</button>
-    <button class="tab-btn" data-tab="settings-tab" disabled>Settings</button>
-    <button class="tab-btn" data-tab="account-tab" disabled>Account</button>
-    <button class="tab-btn" data-tab="collab-tab" disabled>Collab</button>
-  </nav>
-  <div id="auth-buttons">
-    <button id="btn-login">Log In</button>
-    <button id="btn-signup">Sign Up</button>
+
+  <div class="tabs">
+    <div class="tab" onclick="showTab('database')">Database</div>
+    <div class="tab" onclick="showTab('settings')">Settings</div>
+    <div class="tab" onclick="showTab('account')">Account</div>
+    <div class="tab" onclick="showTab('collab')">Collab</div>
   </div>
-  <button id="btn-logout" class="btn-danger" style="display:none; margin-left: 15px;">Log Out</button>
-</header>
 
-<main>
-  <!-- LOGIN FORM -->
-  <section id="login-form" class="tab-content">
-    <h2>Log In</h2>
-    <input type="email" id="login-email" placeholder="Email" required />
-    <input type="password" id="login-password" placeholder="Password" required />
-    <button class="btn" id="login-submit">Log In</button>
-    <p id="login-msg" class="message error"></p>
-  </section>
-
-  <!-- SIGNUP FORM -->
-  <section id="signup-form" class="tab-content">
-    <h2>Sign Up</h2>
-    <input type="email" id="signup-email" placeholder="Email" required />
-    <input type="password" id="signup-password" placeholder="Password (min 6 chars)" required />
-    <button class="btn" id="signup-submit">Sign Up</button>
-    <p id="signup-msg" class="message error"></p>
-  </section>
-
-<!-- DATABASE TAB -->
-<section id="database-tab" class="tab-content">
-  <h2>Database</h2>
-  <form id="db-form">
-    <div id="entry-container">
-      <div class="entry">
-        <input type="text" name="client-name" placeholder="Client Name" required />
-        <input type="tel" name="phone-number" placeholder="Phone Number" required />
-        <input type="text" name="product" placeholder="Product" required />
-        <input type="number" name="quantity" placeholder="Quantity" min="1" required />
-      </div>
-    </div>
-    <button type="button" id="add-entry-btn" class="btn">+ Add Entry</button>
-    <button type="submit" class="btn">Add to Database</button>
-  </form>
-</section>
-
-<script>
-  document.getElementById('add-entry-btn').addEventListener('click', () => {
-    const container = document.getElementById('entry-container');
-
-    const entry = document.createElement('div');
-    entry.classList.add('entry');
-
-    entry.innerHTML = `
-      <input type="text" name="client-name" placeholder="Client Name" required />
-      <input type="tel" name="phone-number" placeholder="Phone Number" required />
-      <input type="text" name="product" placeholder="Product" required />
-      <input type="number" name="quantity" placeholder="Quantity" min="1" required />
-    `;
-
-    container.appendChild(entry);
-  });
-</script>
-
-
-    <h3>Current Database</h3>
-    <table id="db-table">
-      <thead>
-        <tr><th>Client Name</th><th>Phone Number</th><th>Product</th><th>Quantity</th></tr>
-      </thead>
-      <tbody>
-        <!-- Data rows here -->
-      </tbody>
+  <div id="database" class="tab-content active">
+    <h2>Database Manager</h2>
+    <input type="text" id="name" placeholder="Name">
+    <input type="email" id="email" placeholder="Email">
+    <button onclick="addEntry()">Add Entry</button>
+    <button onclick="exportJSON()">Export as JSON</button>
+    <button onclick="exportExcel()">Export as Excel</button>
+    <input type="file" id="import-file" onchange="importDatabase(this)">
+    <button onclick="clearDatabase()">Clear Database</button>
+    <table>
+      <thead><tr><th>Name</th><th>Email</th><th>Actions</th></tr></thead>
+      <tbody id="table-body"></tbody>
     </table>
+  </div>
 
-    <div style="margin-top:15px;">
-      <button class="btn-secondary" id="export-db">Export Database (.json)</button>
-      <input type="file" id="import-db" accept=".json" style="margin-left:10px;" />
-    </div>
-  </section>
-
-  <!-- SETTINGS TAB -->
-  <section id="settings-tab" class="tab-content">
+  <div id="settings" class="tab-content">
     <h2>Settings</h2>
-    <label class="checkbox-label"><input type="checkbox" id="dark-mode-toggle" /> Dark Mode</label>
-    <hr />
-    <h3>About</h3>
-    <p>Smart Orders is your modern order management app.</p>
-    <hr />
-    <h3>Email Us</h3>
-    <form id="email-form">
-      <input type="email" id="email-to" placeholder="Recipient Email" required />
-      <input type="text" id="email-subject" placeholder="Subject" required />
-      <textarea id="email-message" placeholder="Your message..." rows="5" required></textarea>
-      <button type="submit" class="btn">Send Email</button>
-      <p id="email-status"></p>
-    </form>
-  </section>
+    <button onclick="toggleDarkMode()">Toggle Dark Mode</button>
+    <p><strong>About:</strong> Smart Orders is a database manager built for speed and accessibility.</p>
+    <p>Email us at: smartordersofficial@gmail.com</p>
+    <input type="file" accept="image/*" onchange="setProfilePic(this)">
+  </div>
 
-  <!-- ACCOUNT TAB -->
-  <section id="account-tab" class="tab-content">
+  <div id="account" class="tab-content">
     <h2>Account</h2>
-    <p>Email: <span id="account-email">Not logged in</span></p>
-    <label for="profile-pic-input">Update Profile Picture:</label>
-    <input type="file" id="profile-pic-input" accept="image/*" />
-  </section>
+    <button onclick="saveDatabase()">Save Data</button>
+    <button onclick="loadDatabase()">Load Data</button>
+    <button onclick="logout()">Log Out</button>
+    <button onclick="deleteAccount()">Delete Account and Data</button>
+  </div>
 
-  <!-- COLLAB TAB -->
-  <section id="collab-tab" class="tab-content">
-    <h2>Collaboration</h2>
-    <p>This feature is under construction.</p>
-  </section>
-</main>
+  <div id="collab" class="tab-content">
+    <h2>Collab</h2>
+    <p>Feature coming soon...</p>
+  </div>
 
-<script>
-  // State
-  let currentUser = null;
-  let database = [];
+  <script>
+    let database = JSON.parse(localStorage.getItem('database')) || [];
 
-  // Elements
-  const tabs = document.querySelectorAll('nav button.tab-btn');
-  const tabContents = document.querySelectorAll('.tab-content');
-  const authButtons = document.getElementById('auth-buttons');
-  const loginForm = document.getElementById('login-form');
-  const signupForm = document.getElementById('signup-form');
-  const loginMsg = document.getElementById('login-msg');
-  const signupMsg = document.getElementById('signup-msg');
-  const btnLogin = document.getElementById('btn-login');
-  const btnSignup = document.getElementById('btn-signup');
-  const btnLogout = document.getElementById('btn-logout');
-  const accountEmail = document.getElementById('account-email');
-  const profilePic = document.getElementById('profile-pic');
-  const profilePicInput = document.getElementById('profile-pic-input');
-  const dbForm = document.getElementById('db-form');
-  const dbTableBody = document.querySelector('#db-table tbody');
-  const exportBtn = document.getElementById('export-db');
-  const importInput = document.getElementById('import-db');
-  const darkModeToggle = document.getElementById('dark-mode-toggle');
-  const emailForm = document.getElementById('email-form');
-  const emailStatus = document.getElementById('email-status');
+    function showTab(id) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+    }
 
-  // Utilities
-  function saveUser() {
-    if(currentUser) localStorage.setItem('smartOrdersUser', JSON.stringify(currentUser));
-    else localStorage.removeItem('smartOrdersUser');
-  }
-  function loadUser() {
-    const userStr = localStorage.getItem('smartOrdersUser');
-    if (userStr) currentUser = JSON.parse(userStr);
-  }
+    function renderDatabase() {
+      const tbody = document.getElementById('table-body');
+      tbody.innerHTML = '';
+      database.forEach((entry, i) => {
+        const row = `<tr>
+          <td>${entry.name}</td>
+          <td>${entry.email}</td>
+          <td><button onclick="deleteEntry(${i})">Delete</button></td>
+        </tr>`;
+        tbody.innerHTML += row;
+      });
+    }
 
-  function saveDatabase() {
-    localStorage.setItem('smartOrdersDatabase', JSON.stringify(database));
-  }
-  function loadDatabase() {
-    const dbStr = localStorage.getItem('smartOrdersDatabase');
-    if (dbStr) {
-      try {
-        database = JSON.parse(dbStr);
-      } catch {
-        database = [];
-      }
-    } else {
-      // Initial demo data for testing
-      database = [
-        { clientName: "Alice", phoneNumber: "555-1234", product: "Widget A", quantity: 5 },
-        { clientName: "Bob", phoneNumber: "555-5678", product: "Gadget B", quantity: 2 }
-      ];
+    function addEntry() {
+      const name = document.getElementById('name').value.trim();
+      const email = document.getElementById('email').value.trim();
+      if (!name || !email) return alert("Please fill all fields");
+      database.push({ name, email });
       saveDatabase();
+      renderDatabase();
+      document.getElementById('name').value = '';
+      document.getElementById('email').value = '';
     }
-  }
 
-  function renderDatabase() {
-    dbTableBody.innerHTML = '';
-    if(database.length === 0){
-      dbTableBody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:#666;">No entries yet</td></tr>`;
-      return;
-    }
-    database.forEach(entry => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${escapeHtml(entry.clientName)}</td>
-        <td>${escapeHtml(entry.phoneNumber)}</td>
-        <td>${escapeHtml(entry.product)}</td>
-        <td>${entry.quantity}</td>
-      `;
-      dbTableBody.appendChild(tr);
-    });
-  }
-
-  // Sanitize text for HTML
-  function escapeHtml(text) {
-    if (!text) return '';
-    return text.replace(/[&<>"']/g, function(m) {
-      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m];
-    });
-  }
-
-  // Validate email format
-  function validateEmail(email) {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  }
-
-  // Authentication (demo, no backend)
-  function login(email, password) {
-    if (!validateEmail(email)) return "Please enter a valid email.";
-    if (!password || password.length < 6) return "Password must be at least 6 characters.";
-    // Accept any email/pass for demo
-    currentUser = { email };
-    saveUser();
-    return null;
-  }
-  function signup(email, password) {
-    if (!validateEmail(email)) return "Please enter a valid email.";
-    if (!password || password.length < 6) return "Password must be at least 6 characters.";
-    // Accept any signup for demo
-    currentUser = { email };
-    saveUser();
-    return null;
-  }
-  function logout() {
-    currentUser = null;
-    saveUser();
-  }
-
-  // UI updates based on login state
-  function updateUI() {
-    if(currentUser) {
-      authButtons.style.display = "none";
-      loginForm.style.display = "none";
-      signupForm.style.display = "none";
-      accountEmail.textContent = currentUser.email;
-      btnLogout.style.display = "inline-block";
-      tabs.forEach(t => t.disabled = false);
-      // Default tab after login
-      showTab('database-tab');
-    } else {
-      authButtons.style.display = "flex";
-      btnLogout.style.display = "none";
-      tabs.forEach(t => t.disabled = true);
-      accountEmail.textContent = "Not logged in";
-      // Show login form by default
-      showTab('login-form');
-    }
-  }
-
-  // Show one tab/section, hide others
-  function showTab(tabName) {
-    tabContents.forEach(c => {
-      c.classList.toggle('active', c.id === tabName);
-    });
-    tabs.forEach(t => {
-      t.classList.toggle('active', t.dataset.tab === tabName);
-    });
-  }
-
-  // Event handlers
-
-  // Tabs nav clicks
-  tabs.forEach(tabBtn => {
-    tabBtn.addEventListener('click', () => {
-      if (!tabBtn.disabled) showTab(tabBtn.dataset.tab);
-    });
-  });
-
-  // Auth buttons header
-  btnLogin.addEventListener('click', () => {
-    showTab('login-form');
-  });
-  btnSignup.addEventListener('click', () => {
-    showTab('signup-form');
-  });
-
-  // Login form submit
-  document.getElementById('login-submit').addEventListener('click', () => {
-    loginMsg.textContent = "";
-    const email = document.getElementById('login-email').value.trim();
-    const password = document.getElementById('login-password').value.trim();
-    const err = login(email, password);
-    if (err) {
-      loginMsg.textContent = err;
-    } else {
-      loginMsg.textContent = "";
-      updateUI();
-      clearLoginForm();
-    }
-  });
-
-  // Signup form submit
-  document.getElementById('signup-submit').addEventListener('click', () => {
-    signupMsg.textContent = "";
-    const email = document.getElementById('signup-email').value.trim();
-    const password = document.getElementById('signup-password').value.trim();
-    const err = signup(email, password);
-    if (err) {
-      signupMsg.textContent = err;
-    } else {
-      signupMsg.textContent = "";
-      updateUI();
-      clearSignupForm();
-    }
-  });
-
-  // Logout button
-  btnLogout.addEventListener('click', () => {
-    logout();
-    updateUI();
-  });
-
-  // Database form submit
-  dbForm.addEventListener('submit', e => {
-    e.preventDefault();
-    if(!currentUser) {
-      alert("Please log in to add entries.");
-      return;
-    }
-    const clientName = document.getElementById('client-name').value.trim();
-    const phoneNumber = document.getElementById('phone-number').value.trim();
-    const product = document.getElementById('product').value.trim();
-    const quantity = parseInt(document.getElementById('quantity').value, 10);
-
-    if(!clientName || !phoneNumber || !product || isNaN(quantity) || quantity < 1) {
-      alert("Please fill out all fields correctly.");
-      return;
-    }
-    database.push({ clientName, phoneNumber, product, quantity });
-    saveDatabase();
-    renderDatabase();
-    dbForm.reset();
-  });
-
-  // Export database
-  exportBtn.addEventListener('click', () => {
-    if(database.length === 0) {
-      alert("Database is empty, nothing to export.");
-      return;
-    }
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(database, null, 2));
-    const dlAnchor = document.createElement('a');
-    dlAnchor.setAttribute("href", dataStr);
-    dlAnchor.setAttribute("download", "smart_orders_database.json");
-    document.body.appendChild(dlAnchor);
-    dlAnchor.click();
-    dlAnchor.remove();
-  });
-
-  // Import database JSON
-  importInput.addEventListener('change', e => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = evt => {
-      try {
-        const importedData = JSON.parse(evt.target.result);
-        if(!Array.isArray(importedData)) throw new Error("Invalid format");
-        // Simple validation of fields
-        for(const item of importedData) {
-          if(typeof item.clientName !== 'string' ||
-             typeof item.phoneNumber !== 'string' ||
-             typeof item.product !== 'string' ||
-             typeof item.quantity !== 'number') {
-            throw new Error("Invalid data entry");
-          }
-        }
-        database = importedData;
+    function deleteEntry(index) {
+      if (confirm("Delete this entry?")) {
+        database.splice(index, 1);
         saveDatabase();
         renderDatabase();
-        alert("Database imported successfully!");
-      } catch {
-        alert("Failed to import database: invalid JSON or data format.");
       }
-    };
-    reader.readAsText(file);
-    // Reset input for next import
-    importInput.value = "";
-  });
-
-  // Dark mode toggle
-  darkModeToggle.addEventListener('change', e => {
-    if(e.target.checked) {
-      document.body.classList.add('dark');
-      localStorage.setItem('darkMode', 'true');
-    } else {
-      document.body.classList.remove('dark');
-      localStorage.setItem('darkMode', 'false');
-    }
-  });
-
-  // Load dark mode preference
-  function loadDarkMode() {
-    if(localStorage.getItem('darkMode') === 'true') {
-      darkModeToggle.checked = true;
-      document.body.classList.add('dark');
-    } else {
-      darkModeToggle.checked = false;
-      document.body.classList.remove('dark');
-    }
-  }
-
-  // Profile picture update & persistence
-  profilePicInput.addEventListener('change', e => {
-    const file = e.target.files[0];
-    if(!file) return;
-    const reader = new FileReader();
-    reader.onload = evt => {
-      profilePic.src = evt.target.result;
-      // Save to localStorage (limited to size)
-      localStorage.setItem('profilePicData', evt.target.result);
-    };
-    reader.readAsDataURL(file);
-  });
-  function loadProfilePic() {
-    const data = localStorage.getItem('profilePicData');
-    if(data) {
-      profilePic.src = data;
-    }
-  }
-
-  // Clear forms
-  function clearLoginForm() {
-    document.getElementById('login-email').value = '';
-    document.getElementById('login-password').value = '';
-    loginMsg.textContent = '';
-  }
-  function clearSignupForm() {
-    document.getElementById('signup-email').value = '';
-    document.getElementById('signup-password').value = '';
-    signupMsg.textContent = '';
-  }
-
-  // Email sending placeholder (replace with your real service)
-  emailForm.addEventListener('submit', e => {
-    e.preventDefault();
-    emailStatus.textContent = '';
-    const to = document.getElementById('email-to').value.trim();
-    const subject = document.getElementById('email-subject').value.trim();
-    const message = document.getElementById('email-message').value.trim();
-
-    if (!validateEmail(to)) {
-      emailStatus.textContent = "Please enter a valid recipient email.";
-      emailStatus.className = "message error";
-      return;
-    }
-    if (!subject || !message) {
-      emailStatus.textContent = "Subject and message cannot be empty.";
-      emailStatus.className = "message error";
-      return;
     }
 
-    // Simulate sending email - Replace this with your real email sending logic
-    setTimeout(() => {
-      emailStatus.textContent = "Email sent successfully! (simulation)";
-      emailStatus.className = "message success";
-      emailForm.reset();
-    }, 1000);
-  });
+    function saveDatabase() {
+      localStorage.setItem('database', JSON.stringify(database));
+    }
 
-  // Initial load
-  loadUser();
-  loadDatabase();
-  renderDatabase();
-  loadDarkMode();
-  loadProfilePic();
-  updateUI();
+    function loadDatabase() {
+      database = JSON.parse(localStorage.getItem('database')) || [];
+      renderDatabase();
+    }
 
-</script>
+    function clearDatabase() {
+      if (confirm("Clear all entries?")) {
+        database = [];
+        saveDatabase();
+        renderDatabase();
+      }
+    }
+
+    function exportJSON() {
+      const blob = new Blob([JSON.stringify(database, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'database.json';
+      a.click();
+    }
+
+    function exportExcel() {
+      const ws = XLSX.utils.json_to_sheet(database);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Database');
+      XLSX.writeFile(wb, 'database.xlsx');
+    }
+
+    function importDatabase(input) {
+      const file = input.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      if (file.name.endsWith('.json')) {
+        reader.onload = e => {
+          database = JSON.parse(e.target.result);
+          saveDatabase();
+          renderDatabase();
+        };
+        reader.readAsText(file);
+      } else if (file.name.endsWith('.xlsx')) {
+        reader.onload = e => {
+          const data = new Uint8Array(e.target.result);
+          const wb = XLSX.read(data, { type: 'array' });
+          const ws = wb.Sheets[wb.SheetNames[0]];
+          database = XLSX.utils.sheet_to_json(ws);
+          saveDatabase();
+          renderDatabase();
+        };
+        reader.readAsArrayBuffer(file);
+      } else {
+        alert("Unsupported file format");
+      }
+    }
+
+    function toggleDarkMode() {
+      document.body.classList.toggle('dark-mode');
+    }
+
+    function setProfilePic(input) {
+      const file = input.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        document.getElementById('profile-pic').src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function logout() {
+      alert("Logged out");
+      localStorage.clear();
+      database = [];
+      renderDatabase();
+    }
+
+    function deleteAccount() {
+      if (confirm("Delete account and data?")) {
+        localStorage.clear();
+        database = [];
+        renderDatabase();
+        alert("Account deleted");
+      }
+    }
+
+    // Initial load
+    renderDatabase();
+  </script>
 </body>
 </html>
