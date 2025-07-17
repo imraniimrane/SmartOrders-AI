@@ -654,5 +654,81 @@
   updateUI();
 
 </script>
+<script>
+  const entryContainer = document.getElementById('entry-container');
+  const addEntryBtn = document.getElementById('add-entry-btn');
+
+  addEntryBtn.addEventListener('click', () => {
+    const entry = document.createElement('div');
+    entry.classList.add('entry');
+    entry.innerHTML = `
+      <input type="text" name="client-name" placeholder="Client Name" required />
+      <input type="tel" name="phone-number" placeholder="Phone Number" required />
+      <input type="text" name="product" placeholder="Product" required />
+      <input type="number" name="quantity" placeholder="Quantity" min="1" required />
+    `;
+    entryContainer.appendChild(entry);
+  });
+
+  // Sample in-memory database
+  let database = [];
+
+  document.getElementById('db-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const entries = document.querySelectorAll('#entry-container .entry');
+
+    entries.forEach(entry => {
+      const clientName = entry.querySelector('input[name="client-name"]').value;
+      const phoneNumber = entry.querySelector('input[name="phone-number"]').value;
+      const product = entry.querySelector('input[name="product"]').value;
+      const quantity = entry.querySelector('input[name="quantity"]').value;
+
+      database.push({
+        clientName,
+        phoneNumber,
+        product,
+        quantity
+      });
+    });
+
+    alert('Data added to database!');
+    e.target.reset();
+    entryContainer.innerHTML = '';
+  });
+
+  // Export
+  document.getElementById('export-json').addEventListener('click', () => {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(database, null, 2));
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute("href", dataStr);
+    downloadAnchor.setAttribute("download", "smartorders-database.json");
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+  });
+
+  // Import
+  document.getElementById('import-json').addEventListener('change', function () {
+    const file = this.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      try {
+        const imported = JSON.parse(e.target.result);
+        if (Array.isArray(imported)) {
+          database = imported;
+          alert('Database imported successfully!');
+        } else {
+          alert('Invalid JSON structure.');
+        }
+      } catch {
+        alert('Invalid JSON file.');
+      }
+    };
+    reader.readAsText(file);
+  });
+</script>
+
 </body>
 </html>
