@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>SmartOrders - Login & Database</title>
 <style>
+  /* ... your existing CSS styles from your snippet ... */
   body {
     font-family: Arial, sans-serif;
     margin: 0; padding: 0;
@@ -281,305 +282,363 @@
     </form>
   </section>
 
-  <section id="settings-page" class="container" style="display:none;" aria-label="Settings">
+  <section id="settings-page" class="container" style="display:none;" tabindex="0" aria-label="Settings">
     <h2>Settings</h2>
     <label for="dark-mode-toggle">Dark Mode:</label>
     <label class="switch">
-      <input type="checkbox" id="dark-mode-toggle" />
+      <input type="checkbox" id="dark-mode-toggle" aria-checked="false" />
       <span class="slider"></span>
     </label>
-    <div id="server-info"></div>
   </section>
 </div>
 
 <script>
 (() => {
-  // Elements
-  const authPage = document.getElementById('auth-page');
-  const mainApp = document.getElementById('main-app');
-  const loginForm = document.getElementById('login-form');
-  const signupForm = document.getElementById('signup-form');
-  const btnLoginTab = document.getElementById('btn-login');
-  const btnSignupTab = document.getElementById('btn-signup');
+  "use strict";
 
-  const navDbBtn = document.getElementById('nav-db');
-  const navSettingsBtn = document.getElementById('nav-settings');
-  const databasePage = document.getElementById('database-page');
-  const settingsPage = document.getElementById('settings-page');
-  const darkModeToggle = document.getElementById('dark-mode-toggle');
-
-  const btnSwitchAccount = document.getElementById('btn-switch-account');
-  const btnLogout = document.getElementById('btn-logout');
-
-  const dbSelect = document.getElementById('database-select');
-  const btnCreateDb = document.getElementById('btn-create-db');
-  const dbTableBody = document.getElementById('db-table-body');
-
-  const addDataForm = document.getElementById('add-data-form');
-  const inputName = document.getElementById('input-name');
-  const inputPhone = document.getElementById('input-phone');
-  const inputProduct = document.getElementById('input-product');
-  const inputQty = document.getElementById('input-qty');
-
-  const serverInfo = document.getElementById('server-info');
-
-  // State
-  let currentUser = null;
-  let databases = {}; // { dbName: [rows] }
-  let currentDbName = null;
-
-  // --- AUTH FUNCTIONS ---
-
-  // Load users from localStorage
-  function loadUsers() {
-    const data = localStorage.getItem('smartorders-users');
-    return data ? JSON.parse(data) : {};
+  // Helper: get users from localStorage, stored as JSON object: { username: password }
+  function getUsers() {
+    return JSON.parse(localStorage.getItem("users") || "{}");
   }
-
-  // Save users to localStorage
   function saveUsers(users) {
-    localStorage.setItem('smartorders-users', JSON.stringify(users));
+    localStorage.setItem("users", JSON.stringify(users));
   }
 
-  // Load current user's databases from localStorage
-  function loadUserDatabases(username) {
-    const data = localStorage.getItem(`smartorders-db-${username}`);
-    return data ? JSON.parse(data) : {};
+  // Save current logged in username in sessionStorage (cleared on tab close)
+  function setCurrentUser(username) {
+    sessionStorage.setItem("currentUser", username);
+  }
+  function getCurrentUser() {
+    return sessionStorage.getItem("currentUser");
+  }
+  function clearCurrentUser() {
+    sessionStorage.removeItem("currentUser");
   }
 
-  // Save current user's databases
+  // Return databases for user from localStorage
+  function getUserDatabases(username) {
+    const data = localStorage.getItem(`databases_${username}`);
+    if (!data) return {};
+    try {
+      return JSON.parse(data);
+    } catch {
+      return {};
+    }
+  }
   function saveUserDatabases(username, dbs) {
-    localStorage.setItem(`smartorders-db-${username}`, JSON.stringify(dbs));
+    localStorage.setItem(`databases_${username}`, JSON.stringify(dbs));
   }
 
-  // Switch to main app UI after login/signup
-  function enterApp(user) {
-    currentUser = user;
-    databases = loadUserDatabases(currentUser);
+  // UI elements
+  const authPage = document.getElementById("auth-page");
+  const mainApp = document.getElementById("main-app");
+
+  const btnLoginTab = document.getElementById("btn-login");
+  const btnSignupTab = document.getElementById("btn-signup");
+  const loginForm = document.getElementById("login-form");
+  const signupForm = document.getElementById("signup-form");
+
+  const navDbBtn = document.getElementById("nav-db");
+  const navSettingsBtn = document.getElementById("nav-settings");
+  const databasePage = document.getElementById("database-page");
+  const settingsPage = document.getElementById("settings-page");
+
+  const btnLogout = document.getElementById("btn-logout");
+  const btnSwitchAccount = document.getElementById("btn-switch-account");
+
+  const dbSelect = document.getElementById("database-select");
+  const btnCreateDb = document.getElementById("btn-create-db");
+  const dbTableBody = document.getElementById("db-table-body");
+
+  const addDataForm = document.getElementById("add-data-form");
+  const inputName = document.getElementById("input-name");
+  const inputPhone = document.getElementById("input-phone");
+  const inputProduct = document.getElementById("input-product");
+  const inputQty = document.getElementById("input-qty");
+
+  const darkModeToggle = document.getElementById("dark-mode-toggle");
+
+  // Current app state
+  let currentUser = null;
+  let currentDB = null;
+  let databases = {};
+
+  // Toggle between login/signup tabs
+  function switchAuthTab(toLogin) {
+    if (toLogin) {
+      btnLoginTab.classList.add("active");
+      btnLoginTab.setAttribute("aria-pressed", "true");
+      btnSignupTab.classList.remove("active");
+      btnSignupTab.setAttribute("aria-pressed", "false");
+      loginForm.style.display = "";
+      signupForm.style.display = "none";
+    } else {
+      btnSignupTab.classList.add("active");
+      btnSignupTab.setAttribute("aria-pressed", "true");
+      btnLoginTab.classList.remove("active");
+      btnLoginTab.setAttribute("aria-pressed", "false");
+      signupForm.style.display = "";
+      loginForm.style.display = "none";
+    }
+  }
+
+  btnLoginTab.addEventListener("click", () => switchAuthTab(true));
+  btnSignupTab.addEventListener("click", () => switchAuthTab(false));
+
+  // Signup handler
+  signupForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const username = signupForm["signup-username"].value.trim();
+    const password = signupForm["signup-password"].value;
+    if (!username || !password) {
+      alert("Please enter a valid username and password.");
+      return;
+    }
+
+    const users = getUsers();
+    if (users[username]) {
+      alert("Username already taken. Choose another.");
+      return;
+    }
+
+    users[username] = password;
+    saveUsers(users);
+    alert("Sign up successful! Please log in.");
+
+    signupForm.reset();
+    switchAuthTab(true);
+  });
+
+  // Login handler
+  loginForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const username = loginForm["login-username"].value.trim();
+    const password = loginForm["login-password"].value;
+    const users = getUsers();
+    if (!users[username] || users[username] !== password) {
+      alert("Invalid username or password.");
+      return;
+    }
+    // Login success
+    currentUser = username;
+    setCurrentUser(currentUser);
+
+    // Load user's databases
+    databases = getUserDatabases(currentUser);
     if (Object.keys(databases).length === 0) {
-      // If no databases, create a default one
-      databases['default'] = [];
+      // Initialize empty database
+      databases["Default"] = [];
       saveUserDatabases(currentUser, databases);
     }
-    currentDbName = Object.keys(databases)[0];
-    updateDbSelectOptions();
-    renderCurrentDatabase();
+    currentDB = Object.keys(databases)[0];
 
-    authPage.style.display = 'none';
-    mainApp.style.display = 'block';
-    updateNavButtons('db');
-    updateServerInfo();
+    showApp();
+  });
+
+  // Logout and switch account handlers
+  btnLogout.addEventListener("click", () => {
+    if (confirm("Are you sure you want to log out?")) {
+      logout();
+    }
+  });
+  btnSwitchAccount.addEventListener("click", () => {
+    if (confirm("Switch account? You will be logged out.")) {
+      logout();
+    }
+  });
+  function logout() {
+    currentUser = null;
+    currentDB = null;
+    databases = {};
+    clearCurrentUser();
+    hideApp();
   }
 
-  // Render database select dropdown options
-  function updateDbSelectOptions() {
-    dbSelect.innerHTML = '';
+  // Show main app UI
+  function showApp() {
+    authPage.style.display = "none";
+    mainApp.style.display = "";
+
+    navDbBtn.classList.add("active");
+    navDbBtn.setAttribute("aria-pressed", "true");
+    navSettingsBtn.classList.remove("active");
+    navSettingsBtn.setAttribute("aria-pressed", "false");
+    databasePage.style.display = "";
+    settingsPage.style.display = "none";
+
+    loadDatabaseSelect();
+    renderDatabaseTable();
+    loadDarkModeSetting();
+
+    inputName.focus();
+  }
+
+  // Hide main app UI, show auth
+  function hideApp() {
+    authPage.style.display = "";
+    mainApp.style.display = "none";
+
+    loginForm.reset();
+    signupForm.reset();
+    switchAuthTab(true);
+  }
+
+  // Navigation buttons handlers
+  navDbBtn.addEventListener("click", () => {
+    navDbBtn.classList.add("active");
+    navDbBtn.setAttribute("aria-pressed", "true");
+    navSettingsBtn.classList.remove("active");
+    navSettingsBtn.setAttribute("aria-pressed", "false");
+
+    databasePage.style.display = "";
+    settingsPage.style.display = "none";
+
+    inputName.focus();
+  });
+  navSettingsBtn.addEventListener("click", () => {
+    navSettingsBtn.classList.add("active");
+    navSettingsBtn.setAttribute("aria-pressed", "true");
+    navDbBtn.classList.remove("active");
+    navDbBtn.setAttribute("aria-pressed", "false");
+
+    settingsPage.style.display = "";
+    databasePage.style.display = "none";
+
+    darkModeToggle.focus();
+  });
+
+  // Load databases in select
+  function loadDatabaseSelect() {
+    dbSelect.innerHTML = "";
     for (const dbName of Object.keys(databases)) {
-      const option = document.createElement('option');
+      const option = document.createElement("option");
       option.value = dbName;
       option.textContent = dbName;
       dbSelect.appendChild(option);
     }
-    dbSelect.value = currentDbName;
+    if (currentDB && databases[currentDB]) {
+      dbSelect.value = currentDB;
+    } else {
+      currentDB = Object.keys(databases)[0];
+      dbSelect.value = currentDB;
+    }
   }
 
-  // Render current database table
-  function renderCurrentDatabase() {
-    dbTableBody.innerHTML = '';
-    if (!currentDbName || !databases[currentDbName]) return;
-    const rows = databases[currentDbName];
+  // When database select changes
+  dbSelect.addEventListener("change", () => {
+    currentDB = dbSelect.value;
+    renderDatabaseTable();
+  });
+
+  // Create new database
+  btnCreateDb.addEventListener("click", () => {
+    const dbName = prompt("Enter new database name:");
+    if (!dbName) return;
+    if (databases[dbName]) {
+      alert("Database name already exists.");
+      return;
+    }
+    databases[dbName] = [];
+    saveUserDatabases(currentUser, databases);
+    currentDB = dbName;
+    loadDatabaseSelect();
+    renderDatabaseTable();
+  });
+
+  // Render database table for currentDB
+  function renderDatabaseTable() {
+    dbTableBody.innerHTML = "";
+    if (!currentDB || !databases[currentDB]) return;
+    const rows = databases[currentDB];
+    if (rows.length === 0) {
+      const tr = document.createElement("tr");
+      const td = document.createElement("td");
+      td.colSpan = 4;
+      td.style.textAlign = "center";
+      td.textContent = "No entries yet.";
+      tr.appendChild(td);
+      dbTableBody.appendChild(tr);
+      return;
+    }
     for (const row of rows) {
-      const tr = document.createElement('tr');
-      ['clientName', 'phone', 'product', 'quantity'].forEach(key => {
-        const td = document.createElement('td');
-        td.textContent = row[key];
+      const tr = document.createElement("tr");
+      ["name", "phone", "product", "quantity"].forEach((field) => {
+        const td = document.createElement("td");
+        td.textContent = row[field];
         tr.appendChild(td);
       });
       dbTableBody.appendChild(tr);
     }
   }
 
-  // Login form submit
-  loginForm.addEventListener('submit', e => {
-    e.preventDefault();
-    const username = document.getElementById('login-username').value.trim();
-    const password = document.getElementById('login-password').value;
-    const users = loadUsers();
-    if (users[username] && users[username] === password) {
-      enterApp(username);
-    } else {
-      alert('Invalid username or password!');
-    }
-  });
-
-  // Signup form submit
-  signupForm.addEventListener('submit', e => {
-    e.preventDefault();
-    const username = document.getElementById('signup-username').value.trim();
-    const password = document.getElementById('signup-password').value;
-    if (!username || !password) {
-      alert('Please enter username and password');
-      return;
-    }
-    const users = loadUsers();
-    if (users[username]) {
-      alert('Username already exists!');
-      return;
-    }
-    users[username] = password;
-    saveUsers(users);
-    alert('Sign up successful! You can now log in.');
-    btnLoginTab.click();
-  });
-
-  // Toggle between login and signup forms
-  btnLoginTab.addEventListener('click', () => {
-    btnLoginTab.classList.add('active');
-    btnLoginTab.setAttribute('aria-pressed', 'true');
-    btnSignupTab.classList.remove('active');
-    btnSignupTab.setAttribute('aria-pressed', 'false');
-    loginForm.style.display = 'block';
-    signupForm.style.display = 'none';
-  });
-  btnSignupTab.addEventListener('click', () => {
-    btnSignupTab.classList.add('active');
-    btnSignupTab.setAttribute('aria-pressed', 'true');
-    btnLoginTab.classList.remove('active');
-    btnLoginTab.setAttribute('aria-pressed', 'false');
-    signupForm.style.display = 'block';
-    loginForm.style.display = 'none';
-  });
-
-  // Logout and switch account
-  btnLogout.addEventListener('click', () => {
-    if (confirm('Are you sure you want to log out?')) {
-      logout();
-    }
-  });
-  btnSwitchAccount.addEventListener('click', () => {
-    logout();
-  });
-
-  function logout() {
-    currentUser = null;
-    databases = {};
-    currentDbName = null;
-    authPage.style.display = 'block';
-    mainApp.style.display = 'none';
-    loginForm.reset();
-    signupForm.reset();
-  }
-
-  // --- NAVIGATION ---
-  navDbBtn.addEventListener('click', () => {
-    updateNavButtons('db');
-  });
-  navSettingsBtn.addEventListener('click', () => {
-    updateNavButtons('settings');
-  });
-
-  function updateNavButtons(section) {
-    if (section === 'db') {
-      navDbBtn.classList.add('active');
-      navDbBtn.setAttribute('aria-pressed', 'true');
-      navSettingsBtn.classList.remove('active');
-      navSettingsBtn.setAttribute('aria-pressed', 'false');
-      databasePage.style.display = 'block';
-      settingsPage.style.display = 'none';
-    } else {
-      navSettingsBtn.classList.add('active');
-      navSettingsBtn.setAttribute('aria-pressed', 'true');
-      navDbBtn.classList.remove('active');
-      navDbBtn.setAttribute('aria-pressed', 'false');
-      databasePage.style.display = 'none';
-      settingsPage.style.display = 'block';
-    }
-  }
-
-  // --- DARK MODE ---
-  // Load dark mode setting from localStorage
-  const darkModeStored = localStorage.getItem('smartorders-darkmode') === 'true';
-  darkModeToggle.checked = darkModeStored;
-  updateDarkMode(darkModeStored);
-
-  darkModeToggle.addEventListener('change', e => {
-    updateDarkMode(e.target.checked);
-  });
-
-  function updateDarkMode(enabled) {
-    if (enabled) {
-      document.body.classList.add('dark');
-    } else {
-      document.body.classList.remove('dark');
-    }
-    localStorage.setItem('smartorders-darkmode', enabled);
-  }
-
-  // --- DATABASE MANAGEMENT ---
-
-  // Create new database button
-  btnCreateDb.addEventListener('click', () => {
-    const newDbName = prompt('Enter new database name:').trim();
-    if (!newDbName) {
-      alert('Database name cannot be empty.');
-      return;
-    }
-    if (databases[newDbName]) {
-      alert('A database with that name already exists.');
-      return;
-    }
-    databases[newDbName] = [];
-    currentDbName = newDbName;
-    saveUserDatabases(currentUser, databases);
-    updateDbSelectOptions();
-    renderCurrentDatabase();
-  });
-
-  // Change selected database from dropdown
-  dbSelect.addEventListener('change', () => {
-    currentDbName = dbSelect.value;
-    renderCurrentDatabase();
-  });
-
   // Add data form submit
-  addDataForm.addEventListener('submit', e => {
+  addDataForm.addEventListener("submit", (e) => {
     e.preventDefault();
-    if (!currentDbName) {
-      alert('Please select or create a database first.');
+    if (!currentDB) {
+      alert("Select or create a database first.");
       return;
     }
-    const clientName = inputName.value.trim();
+    const name = inputName.value.trim();
     const phone = inputPhone.value.trim();
     const product = inputProduct.value.trim();
-    const quantity = Number(inputQty.value);
-
-    if (!clientName || !phone || !product || quantity < 1) {
-      alert('Please fill all fields correctly.');
+    const quantity = parseInt(inputQty.value, 10);
+    if (!name || !phone || !product || isNaN(quantity) || quantity < 1) {
+      alert("Please fill all fields correctly.");
       return;
     }
-
-    databases[currentDbName].push({
-      clientName,
-      phone,
-      product,
-      quantity,
-    });
-
+    const newEntry = { name, phone, product, quantity };
+    databases[currentDB].push(newEntry);
     saveUserDatabases(currentUser, databases);
-    renderCurrentDatabase();
+    renderDatabaseTable();
     addDataForm.reset();
+    inputName.focus();
   });
 
-  // --- SERVER INFO ---
+  // Dark mode toggle
+  function loadDarkModeSetting() {
+    const mode = localStorage.getItem("darkMode") || "false";
+    const enabled = mode === "true";
+    darkModeToggle.checked = enabled;
+    setDarkMode(enabled);
+  }
+  function setDarkMode(enabled) {
+    if (enabled) {
+      document.body.classList.add("dark");
+      darkModeToggle.setAttribute("aria-checked", "true");
+    } else {
+      document.body.classList.remove("dark");
+      darkModeToggle.setAttribute("aria-checked", "false");
+    }
+    localStorage.setItem("darkMode", enabled.toString());
+  }
+  darkModeToggle.addEventListener("change", (e) => {
+    setDarkMode(e.target.checked);
+  });
 
-  function updateServerInfo() {
-    // Here, we simulate server info because no backend is present.
-    // Show current user and number of databases.
-    serverInfo.textContent = `Logged in as: ${currentUser} | Databases: ${Object.keys(databases).length}`;
+  // On page load, check if user is logged in already in sessionStorage
+  function tryAutoLogin() {
+    const user = getCurrentUser();
+    if (user) {
+      const users = getUsers();
+      if (users[user]) {
+        currentUser = user;
+        databases = getUserDatabases(user);
+        if (Object.keys(databases).length === 0) {
+          databases["Default"] = [];
+          saveUserDatabases(user, databases);
+        }
+        currentDB = Object.keys(databases)[0];
+        showApp();
+        return true;
+      }
+    }
+    return false;
   }
 
-  // --- Initialize ---
-  btnLoginTab.click();
+  // Init
+  if (!tryAutoLogin()) {
+    hideApp();
+  }
 
 })();
 </script>
