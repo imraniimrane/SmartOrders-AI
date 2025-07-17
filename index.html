@@ -1,44 +1,660 @@
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Send Email - Smart Orders</title>
-  <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
-  <script>
-    (function(){
-      emailjs.init("27xvHIt7kuuZewPB3"); // Your EmailJS public key
-    })();
-  </script>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Smart Orders - Fully Functional</title>
+<style>
+  :root {
+    --cyan: #00bcd4;
+    --dark-bg: #121212;
+    --light-bg: #f5f5f5;
+    --dark-text: #eee;
+    --light-text: #222;
+  }
+  body {
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: var(--light-bg);
+    color: var(--light-text);
+    transition: background 0.3s, color 0.3s;
+  }
+  body.dark {
+    background: var(--dark-bg);
+    color: var(--dark-text);
+  }
+  header {
+    display: flex;
+    align-items: center;
+    background: var(--cyan);
+    color: white;
+    padding: 10px 20px;
+  }
+  #logo-section {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+    font-size: 1.3rem;
+    user-select: none;
+  }
+  #profile-pic {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid white;
+  }
+  nav {
+    display: flex;
+    gap: 15px;
+    margin-left: 40px;
+    flex-grow: 1;
+  }
+  nav button.tab-btn {
+    background: transparent;
+    border: none;
+    color: white;
+    font-weight: 600;
+    font-size: 1rem;
+    padding: 8px 12px;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: border-color 0.25s;
+  }
+  nav button.tab-btn.active {
+    border-bottom: 3px solid white;
+  }
+  #auth-buttons {
+    display: flex;
+    gap: 15px;
+  }
+  #auth-buttons button {
+    background: white;
+    color: var(--cyan);
+    border: none;
+    padding: 7px 15px;
+    font-weight: 600;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  #auth-buttons button:hover {
+    background: #e0f7fa;
+  }
+  main {
+    padding: 20px;
+  }
+  .tab-content {
+    display: none;
+    max-width: 800px;
+  }
+  .tab-content.active {
+    display: block;
+  }
+  input, select, textarea {
+    width: 100%;
+    padding: 8px 10px;
+    margin: 8px 0 16px;
+    border: 1.8px solid #ccc;
+    border-radius: 6px;
+    font-size: 1rem;
+    transition: border-color 0.25s;
+  }
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--cyan);
+    outline: none;
+  }
+  .btn {
+    background: var(--cyan);
+    color: white;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 24px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  .btn:hover {
+    background: #0097a7;
+  }
+  .btn-secondary {
+    background: #e0e0e0;
+    color: var(--cyan);
+  }
+  .btn-secondary:hover {
+    background: #b2ebf2;
+  }
+  .btn-danger {
+    background: #e53935;
+    color: white;
+  }
+  .btn-danger:hover {
+    background: #b71c1c;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+  }
+  th, td {
+    border: 1.5px solid #ccc;
+    padding: 10px;
+    text-align: left;
+  }
+  th {
+    background: var(--cyan);
+    color: white;
+  }
+  body.dark th {
+    background: #007c91;
+  }
+  label.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+  }
+  input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+  }
+  #profile-pic-input {
+    margin-top: 6px;
+  }
+  #email-status {
+    font-weight: 600;
+    margin-top: 8px;
+  }
+  p.message {
+    font-weight: 600;
+    margin-top: 4px;
+  }
+  p.message.error {
+    color: red;
+  }
+  p.message.success {
+    color: green;
+  }
+</style>
 </head>
 <body>
+<header>
+  <div id="logo-section">
+    <img id="profile-pic" src="https://i.pravatar.cc/36" alt="Profile Picture" />
+    <div>Smart Orders</div>
+  </div>
+  <nav>
+    <button class="tab-btn" data-tab="database-tab" disabled>Database</button>
+    <button class="tab-btn" data-tab="settings-tab" disabled>Settings</button>
+    <button class="tab-btn" data-tab="account-tab" disabled>Account</button>
+    <button class="tab-btn" data-tab="collab-tab" disabled>Collab</button>
+  </nav>
+  <div id="auth-buttons">
+    <button id="btn-login">Log In</button>
+    <button id="btn-signup">Sign Up</button>
+  </div>
+  <button id="btn-logout" class="btn-danger" style="display:none; margin-left: 15px;">Log Out</button>
+</header>
 
-  <h3>Contact Smart Orders</h3>
-  <form id="contact-form">
-    <input type="text" id="user_name" placeholder="Your Name" required />
-    <input type="email" id="user_email" placeholder="Your Email" required />
-    <textarea id="message" placeholder="Your Message" required></textarea>
-    <button type="submit">Send</button>
+<main>
+  <!-- LOGIN FORM -->
+  <section id="login-form" class="tab-content">
+    <h2>Log In</h2>
+    <input type="email" id="login-email" placeholder="Email" required />
+    <input type="password" id="login-password" placeholder="Password" required />
+    <button class="btn" id="login-submit">Log In</button>
+    <p id="login-msg" class="message error"></p>
+  </section>
+
+  <!-- SIGNUP FORM -->
+  <section id="signup-form" class="tab-content">
+    <h2>Sign Up</h2>
+    <input type="email" id="signup-email" placeholder="Email" required />
+    <input type="password" id="signup-password" placeholder="Password (min 6 chars)" required />
+    <button class="btn" id="signup-submit">Sign Up</button>
+    <p id="signup-msg" class="message error"></p>
+  </section>
+
+<!-- DATABASE TAB -->
+<section id="database-tab" class="tab-content">
+  <h2>Database</h2>
+  <form id="db-form">
+    <div id="entry-container">
+      <div class="entry">
+        <input type="text" name="client-name" placeholder="Client Name" required />
+        <input type="tel" name="phone-number" placeholder="Phone Number" required />
+        <input type="text" name="product" placeholder="Product" required />
+        <input type="number" name="quantity" placeholder="Quantity" min="1" required />
+      </div>
+    </div>
+    <button type="button" id="add-entry-btn" class="btn">+ Add Entry</button>
+    <button type="submit" class="btn">Add to Database</button>
   </form>
+</section>
 
-  <script>
-    document.getElementById('contact-form').addEventListener('submit', function(event) {
-      event.preventDefault();
+<script>
+  document.getElementById('add-entry-btn').addEventListener('click', () => {
+    const container = document.getElementById('entry-container');
 
-      emailjs.send('service_xanb1zn', 'template_vlj4fr6', {
-        from_name: document.getElementById('user_name').value,
-        reply_to: document.getElementById('user_email').value,
-        to_email: 'smartordersoffcial@gmail.com',
-        message: document.getElementById('message').value
-      })
-      .then(function(response) {
-        alert('Email sent successfully!');
-        document.getElementById('contact-form').reset();
-      }, function(error) {
-        alert('Failed to send email. Please try again.');
-        console.error(error);
-      });
+    const entry = document.createElement('div');
+    entry.classList.add('entry');
+
+    entry.innerHTML = `
+      <input type="text" name="client-name" placeholder="Client Name" required />
+      <input type="tel" name="phone-number" placeholder="Phone Number" required />
+      <input type="text" name="product" placeholder="Product" required />
+      <input type="number" name="quantity" placeholder="Quantity" min="1" required />
+    `;
+
+    container.appendChild(entry);
+  });
+</script>
+
+
+    <h3>Current Database</h3>
+    <table id="db-table">
+      <thead>
+        <tr><th>Client Name</th><th>Phone Number</th><th>Product</th><th>Quantity</th></tr>
+      </thead>
+      <tbody>
+        <!-- Data rows here -->
+      </tbody>
+    </table>
+
+    <div style="margin-top:15px;">
+      <button class="btn-secondary" id="export-db">Export Database (.json)</button>
+      <input type="file" id="import-db" accept=".json" style="margin-left:10px;" />
+    </div>
+  </section>
+
+  <!-- SETTINGS TAB -->
+  <section id="settings-tab" class="tab-content">
+    <h2>Settings</h2>
+    <label class="checkbox-label"><input type="checkbox" id="dark-mode-toggle" /> Dark Mode</label>
+    <hr />
+    <h3>About</h3>
+    <p>Smart Orders is your modern order management app.</p>
+    <hr />
+    <h3>Email Us</h3>
+    <form id="email-form">
+      <input type="email" id="email-to" placeholder="Recipient Email" required />
+      <input type="text" id="email-subject" placeholder="Subject" required />
+      <textarea id="email-message" placeholder="Your message..." rows="5" required></textarea>
+      <button type="submit" class="btn">Send Email</button>
+      <p id="email-status"></p>
+    </form>
+  </section>
+
+  <!-- ACCOUNT TAB -->
+  <section id="account-tab" class="tab-content">
+    <h2>Account</h2>
+    <p>Email: <span id="account-email">Not logged in</span></p>
+    <label for="profile-pic-input">Update Profile Picture:</label>
+    <input type="file" id="profile-pic-input" accept="image/*" />
+  </section>
+
+  <!-- COLLAB TAB -->
+  <section id="collab-tab" class="tab-content">
+    <h2>Collaboration</h2>
+    <p>This feature is under construction.</p>
+  </section>
+</main>
+
+<script>
+  // State
+  let currentUser = null;
+  let database = [];
+
+  // Elements
+  const tabs = document.querySelectorAll('nav button.tab-btn');
+  const tabContents = document.querySelectorAll('.tab-content');
+  const authButtons = document.getElementById('auth-buttons');
+  const loginForm = document.getElementById('login-form');
+  const signupForm = document.getElementById('signup-form');
+  const loginMsg = document.getElementById('login-msg');
+  const signupMsg = document.getElementById('signup-msg');
+  const btnLogin = document.getElementById('btn-login');
+  const btnSignup = document.getElementById('btn-signup');
+  const btnLogout = document.getElementById('btn-logout');
+  const accountEmail = document.getElementById('account-email');
+  const profilePic = document.getElementById('profile-pic');
+  const profilePicInput = document.getElementById('profile-pic-input');
+  const dbForm = document.getElementById('db-form');
+  const dbTableBody = document.querySelector('#db-table tbody');
+  const exportBtn = document.getElementById('export-db');
+  const importInput = document.getElementById('import-db');
+  const darkModeToggle = document.getElementById('dark-mode-toggle');
+  const emailForm = document.getElementById('email-form');
+  const emailStatus = document.getElementById('email-status');
+
+  // Utilities
+  function saveUser() {
+    if(currentUser) localStorage.setItem('smartOrdersUser', JSON.stringify(currentUser));
+    else localStorage.removeItem('smartOrdersUser');
+  }
+  function loadUser() {
+    const userStr = localStorage.getItem('smartOrdersUser');
+    if (userStr) currentUser = JSON.parse(userStr);
+  }
+
+  function saveDatabase() {
+    localStorage.setItem('smartOrdersDatabase', JSON.stringify(database));
+  }
+  function loadDatabase() {
+    const dbStr = localStorage.getItem('smartOrdersDatabase');
+    if (dbStr) {
+      try {
+        database = JSON.parse(dbStr);
+      } catch {
+        database = [];
+      }
+    } else {
+      // Initial demo data for testing
+      database = [
+        { clientName: "Alice", phoneNumber: "555-1234", product: "Widget A", quantity: 5 },
+        { clientName: "Bob", phoneNumber: "555-5678", product: "Gadget B", quantity: 2 }
+      ];
+      saveDatabase();
+    }
+  }
+
+  function renderDatabase() {
+    dbTableBody.innerHTML = '';
+    if(database.length === 0){
+      dbTableBody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:#666;">No entries yet</td></tr>`;
+      return;
+    }
+    database.forEach(entry => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${escapeHtml(entry.clientName)}</td>
+        <td>${escapeHtml(entry.phoneNumber)}</td>
+        <td>${escapeHtml(entry.product)}</td>
+        <td>${entry.quantity}</td>
+      `;
+      dbTableBody.appendChild(tr);
     });
-  </script>
+  }
 
+  // Sanitize text for HTML
+  function escapeHtml(text) {
+    if (!text) return '';
+    return text.replace(/[&<>"']/g, function(m) {
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m];
+    });
+  }
+
+  // Validate email format
+  function validateEmail(email) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  }
+
+  // Authentication (demo, no backend)
+  function login(email, password) {
+    if (!validateEmail(email)) return "Please enter a valid email.";
+    if (!password || password.length < 6) return "Password must be at least 6 characters.";
+    // Accept any email/pass for demo
+    currentUser = { email };
+    saveUser();
+    return null;
+  }
+  function signup(email, password) {
+    if (!validateEmail(email)) return "Please enter a valid email.";
+    if (!password || password.length < 6) return "Password must be at least 6 characters.";
+    // Accept any signup for demo
+    currentUser = { email };
+    saveUser();
+    return null;
+  }
+  function logout() {
+    currentUser = null;
+    saveUser();
+  }
+
+  // UI updates based on login state
+  function updateUI() {
+    if(currentUser) {
+      authButtons.style.display = "none";
+      loginForm.style.display = "none";
+      signupForm.style.display = "none";
+      accountEmail.textContent = currentUser.email;
+      btnLogout.style.display = "inline-block";
+      tabs.forEach(t => t.disabled = false);
+      // Default tab after login
+      showTab('database-tab');
+    } else {
+      authButtons.style.display = "flex";
+      btnLogout.style.display = "none";
+      tabs.forEach(t => t.disabled = true);
+      accountEmail.textContent = "Not logged in";
+      // Show login form by default
+      showTab('login-form');
+    }
+  }
+
+  // Show one tab/section, hide others
+  function showTab(tabName) {
+    tabContents.forEach(c => {
+      c.classList.toggle('active', c.id === tabName);
+    });
+    tabs.forEach(t => {
+      t.classList.toggle('active', t.dataset.tab === tabName);
+    });
+  }
+
+  // Event handlers
+
+  // Tabs nav clicks
+  tabs.forEach(tabBtn => {
+    tabBtn.addEventListener('click', () => {
+      if (!tabBtn.disabled) showTab(tabBtn.dataset.tab);
+    });
+  });
+
+  // Auth buttons header
+  btnLogin.addEventListener('click', () => {
+    showTab('login-form');
+  });
+  btnSignup.addEventListener('click', () => {
+    showTab('signup-form');
+  });
+
+  // Login form submit
+  document.getElementById('login-submit').addEventListener('click', () => {
+    loginMsg.textContent = "";
+    const email = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-password').value.trim();
+    const err = login(email, password);
+    if (err) {
+      loginMsg.textContent = err;
+    } else {
+      loginMsg.textContent = "";
+      updateUI();
+      clearLoginForm();
+    }
+  });
+
+  // Signup form submit
+  document.getElementById('signup-submit').addEventListener('click', () => {
+    signupMsg.textContent = "";
+    const email = document.getElementById('signup-email').value.trim();
+    const password = document.getElementById('signup-password').value.trim();
+    const err = signup(email, password);
+    if (err) {
+      signupMsg.textContent = err;
+    } else {
+      signupMsg.textContent = "";
+      updateUI();
+      clearSignupForm();
+    }
+  });
+
+  // Logout button
+  btnLogout.addEventListener('click', () => {
+    logout();
+    updateUI();
+  });
+
+  // Database form submit
+  dbForm.addEventListener('submit', e => {
+    e.preventDefault();
+    if(!currentUser) {
+      alert("Please log in to add entries.");
+      return;
+    }
+    const clientName = document.getElementById('client-name').value.trim();
+    const phoneNumber = document.getElementById('phone-number').value.trim();
+    const product = document.getElementById('product').value.trim();
+    const quantity = parseInt(document.getElementById('quantity').value, 10);
+
+    if(!clientName || !phoneNumber || !product || isNaN(quantity) || quantity < 1) {
+      alert("Please fill out all fields correctly.");
+      return;
+    }
+    database.push({ clientName, phoneNumber, product, quantity });
+    saveDatabase();
+    renderDatabase();
+    dbForm.reset();
+  });
+
+  // Export database
+  exportBtn.addEventListener('click', () => {
+    if(database.length === 0) {
+      alert("Database is empty, nothing to export.");
+      return;
+    }
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(database, null, 2));
+    const dlAnchor = document.createElement('a');
+    dlAnchor.setAttribute("href", dataStr);
+    dlAnchor.setAttribute("download", "smart_orders_database.json");
+    document.body.appendChild(dlAnchor);
+    dlAnchor.click();
+    dlAnchor.remove();
+  });
+
+  // Import database JSON
+  importInput.addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = evt => {
+      try {
+        const importedData = JSON.parse(evt.target.result);
+        if(!Array.isArray(importedData)) throw new Error("Invalid format");
+        // Simple validation of fields
+        for(const item of importedData) {
+          if(typeof item.clientName !== 'string' ||
+             typeof item.phoneNumber !== 'string' ||
+             typeof item.product !== 'string' ||
+             typeof item.quantity !== 'number') {
+            throw new Error("Invalid data entry");
+          }
+        }
+        database = importedData;
+        saveDatabase();
+        renderDatabase();
+        alert("Database imported successfully!");
+      } catch {
+        alert("Failed to import database: invalid JSON or data format.");
+      }
+    };
+    reader.readAsText(file);
+    // Reset input for next import
+    importInput.value = "";
+  });
+
+  // Dark mode toggle
+  darkModeToggle.addEventListener('change', e => {
+    if(e.target.checked) {
+      document.body.classList.add('dark');
+      localStorage.setItem('darkMode', 'true');
+    } else {
+      document.body.classList.remove('dark');
+      localStorage.setItem('darkMode', 'false');
+    }
+  });
+
+  // Load dark mode preference
+  function loadDarkMode() {
+    if(localStorage.getItem('darkMode') === 'true') {
+      darkModeToggle.checked = true;
+      document.body.classList.add('dark');
+    } else {
+      darkModeToggle.checked = false;
+      document.body.classList.remove('dark');
+    }
+  }
+
+  // Profile picture update & persistence
+  profilePicInput.addEventListener('change', e => {
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = evt => {
+      profilePic.src = evt.target.result;
+      // Save to localStorage (limited to size)
+      localStorage.setItem('profilePicData', evt.target.result);
+    };
+    reader.readAsDataURL(file);
+  });
+  function loadProfilePic() {
+    const data = localStorage.getItem('profilePicData');
+    if(data) {
+      profilePic.src = data;
+    }
+  }
+
+  // Clear forms
+  function clearLoginForm() {
+    document.getElementById('login-email').value = '';
+    document.getElementById('login-password').value = '';
+    loginMsg.textContent = '';
+  }
+  function clearSignupForm() {
+    document.getElementById('signup-email').value = '';
+    document.getElementById('signup-password').value = '';
+    signupMsg.textContent = '';
+  }
+
+  // Email sending placeholder (replace with your real service)
+  emailForm.addEventListener('submit', e => {
+    e.preventDefault();
+    emailStatus.textContent = '';
+    const to = document.getElementById('email-to').value.trim();
+    const subject = document.getElementById('email-subject').value.trim();
+    const message = document.getElementById('email-message').value.trim();
+
+    if (!validateEmail(to)) {
+      emailStatus.textContent = "Please enter a valid recipient email.";
+      emailStatus.className = "message error";
+      return;
+    }
+    if (!subject || !message) {
+      emailStatus.textContent = "Subject and message cannot be empty.";
+      emailStatus.className = "message error";
+      return;
+    }
+
+    // Simulate sending email - Replace this with your real email sending logic
+    setTimeout(() => {
+      emailStatus.textContent = "Email sent successfully! (simulation)";
+      emailStatus.className = "message success";
+      emailForm.reset();
+    }, 1000);
+  });
+
+  // Initial load
+  loadUser();
+  loadDatabase();
+  renderDatabase();
+  loadDarkMode();
+  loadProfilePic();
+  updateUI();
+
+</script>
 </body>
 </html>
