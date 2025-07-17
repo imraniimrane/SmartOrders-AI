@@ -93,6 +93,27 @@
       }
     }
 
+
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+
+<script>
+  function exportToExcel() {
+    if (!database || database.length === 0) {
+      alert("Database is empty.");
+      return;
+    }
+
+    const worksheet = XLSX.utils.json_to_sheet(database);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Database");
+
+    XLSX.writeFile(workbook, "smart_orders_database.xlsx");
+  }
+
+  document.getElementById("export-excel-btn").addEventListener("click", exportToExcel);
+</script>
+
+
     // Save database to localStorage
     function saveDatabase() {
       localStorage.setItem('database', JSON.stringify(database));
