@@ -1,101 +1,636 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth" >
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Smart Orders</title>
-  <link rel="stylesheet" href="styles.css" />
-  <script type="module" src="app.js" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Smart Orders</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/emailjs-com@3.2.0/dist/email.min.js"></script>
+<style>
+  [x-cloak] { display: none !important; }
+  /* Toggle switch */
+  input[type="checkbox"] + .slider {
+    position: relative;
+    cursor: pointer;
+    display: inline-block;
+    width: 48px;
+    height: 24px;
+  }
+  input[type="checkbox"] + .slider::before {
+    content: "";
+    position: absolute;
+    height: 20px;
+    width: 20px;
+    left: 2px;
+    bottom: 2px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+  }
+  input[type="checkbox"]:checked + .slider::before {
+    transform: translateX(24px);
+  }
+  input[type="checkbox"] + .slider {
+    background-color: #9ca3af;
+    border-radius: 24px;
+    transition: .4s;
+  }
+  input[type="checkbox"]:checked + .slider {
+    background-color: #06b6d4;
+  }
+</style>
 </head>
-<body>
-  <!-- AUTH SCREENS -->
-  <div id="auth-screen" class="screen">
-    <div class="auth-container">
-      <h2>Smart Orders</h2>
-      <div class="tabs">
-        <button id="tab-login" class="tab active">Login</button>
-        <button id="tab-signup" class="tab">Signup</button>
-      </div>
-      <form id="login-form" class="auth-form">
-        <input type="email" id="login-email" placeholder="Email" required />
-        <input type="password" id="login-password" placeholder="Password" required />
-        <button type="submit">Login</button>
+<body class="bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen flex flex-col font-sans">
+
+<!-- Top Bar -->
+<header class="bg-cyan-500 flex items-center px-5 py-3 gap-4 shadow-md select-none">
+  <img id="profilePicTop" src="" alt="Profile" class="w-10 h-10 rounded-full border-2 border-white hidden" />
+  <h1 class="text-white font-extrabold text-xl">Smart Orders</h1>
+  <nav class="ml-auto flex gap-2">
+    <button class="tab-btn text-white font-semibold px-3 py-1 rounded hover:bg-cyan-600 transition" data-tab="database">Database</button>
+    <button class="tab-btn text-white font-semibold px-3 py-1 rounded hover:bg-cyan-600 transition" data-tab="settings">Settings</button>
+    <button class="tab-btn text-white font-semibold px-3 py-1 rounded hover:bg-cyan-600 transition" data-tab="account">Account</button>
+    <button class="tab-btn text-white font-semibold px-3 py-1 rounded hover:bg-cyan-600 transition" data-tab="collab">Collab</button>
+  </nav>
+</header>
+
+<main class="flex-grow overflow-auto p-6 max-w-7xl mx-auto w-full">
+
+  <!-- Toast Notifications -->
+  <div id="toast-container" class="fixed bottom-5 right-5 space-y-3 z-50"></div>
+
+  <!-- LOGIN/SIGNUP MODAL -->
+  <div id="authModal" class="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-40" x-cloak>
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 w-96 max-w-full">
+      <h2 class="text-2xl font-bold mb-4 text-cyan-600 text-center" id="authTitle">Login to Smart Orders</h2>
+      <form id="authForm" class="space-y-4">
+        <input type="email" id="authEmail" placeholder="Email" required
+               class="w-full px-3 py-2 rounded border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 dark:bg-gray-700 dark:text-gray-100"/>
+        <input type="password" id="authPassword" placeholder="Password" required
+               class="w-full px-3 py-2 rounded border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 dark:bg-gray-700 dark:text-gray-100"/>
+        <button type="submit" class="w-full bg-cyan-600 hover:bg-cyan-700 text-white py-2 rounded font-semibold transition">Login</button>
       </form>
-      <form id="signup-form" class="auth-form hidden">
-        <input type="email" id="signup-email" placeholder="Email" required />
-        <input type="password" id="signup-password" placeholder="Password" required />
-        <button type="submit">Sign Up</button>
-      </form>
+      <p class="mt-4 text-center text-sm text-gray-600 dark:text-gray-400">
+        Don't have an account?
+        <button id="switchToSignup" class="text-cyan-600 font-semibold hover:underline">Sign up</button>
+      </p>
+      <p class="mt-2 text-center text-sm text-red-600 dark:text-red-400 hidden" id="authMessage"></p>
     </div>
   </div>
 
-  <!-- MAIN APP -->
-  <div id="app-screen" class="screen hidden">
-    <header class="app-header">
-      <div class="brand">
-        <img id="profile-pic" src="" alt="Profile" />
-        <span>Smart Orders</span>
-      </div>
-      <nav class="tabs-nav">
-        <button class="tab active" data-tab="database">Database</button>
-        <button class="tab" data-tab="settings">Settings</button>
-        <button class="tab" data-tab="account">Account</button>
-        <button class="tab" data-tab="collab">Collab</button>
-      </nav>
-    </header>
-
-    <main>
-      <!-- DATABASE TAB -->
-      <section id="tab-database" class="tab-content">
-        <button id="btn-create-db">Create Database</button>
-        <select id="database-select"></select>
-        <form id="add-data-form">
-          <input id="input-name" placeholder="Client Name" required />
-          <input id="input-phone" placeholder="Phone Number" required />
-          <input id="input-product" placeholder="Product" required />
-          <input id="input-quantity" type="number" placeholder="Quantity" required />
-          <button type="submit">Add Entry</button>
-        </form>
-        <table>
-          <thead>
-            <tr><th>Name</th><th>Phone</th><th>Product</th><th>Quantity</th><th>Action</th></tr>
-          </thead>
-          <tbody id="db-table-body"></tbody>
-        </table>
-        <textarea id="export-area" class="hidden" readonly></textarea>
-        <button id="btn-export">Export to JSON</button>
-        <input type="file" id="import-file" accept=".json" />
-        <button id="btn-import">Import Database</button>
-        <button id="btn-clear-db">Clear Database</button>
-      </section>
-
-      <!-- SETTINGS TAB -->
-      <section id="tab-settings" class="tab-content hidden">
-        <label><input type="checkbox" id="theme-toggle" /> Dark Mode</label>
-        <p>About: Smart Orders v1.0 — Cloud Sync Enabled</p>
-        <p><a href="mailto:smartordersoffcial@gmail.com">Email us</a></p>
-        <form id="secure-email-form">
-          <input type="email" id="secure-email" placeholder="Extra protection email" required />
-          <button type="submit">Send 6-digit code</button>
-        </form>
-        <button id="view-db-json">View Raw Database</button>
-        <pre id="raw-db-view" class="hidden"></pre>
-      </section>
-
-      <!-- ACCOUNT TAB -->
-      <section id="tab-account" class="tab-content hidden">
-        <button id="btn-save-to-cloud">Save Data to Cloud</button>
-        <button id="btn-load-from-cloud">Load Data from Cloud</button>
-        <button id="btn-logout">Log Out</button>
-        <button id="btn-delete-account">Delete Account and Data</button>
-      </section>
-
-      <!-- COLLAB TAB -->
-      <section id="tab-collab" class="tab-content hidden">
-        <p>Collab feature coming soon!</p>
-      </section>
-    </main>
+  <!-- SIGNUP MODAL -->
+  <div id="signupModal" class="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-40" x-cloak>
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 w-96 max-w-full">
+      <h2 class="text-2xl font-bold mb-4 text-cyan-600 text-center">Create your account</h2>
+      <form id="signupForm" class="space-y-4">
+        <input type="email" id="signupEmail" placeholder="Email" required
+               class="w-full px-3 py-2 rounded border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 dark:bg-gray-700 dark:text-gray-100"/>
+        <input type="password" id="signupPassword" placeholder="Password (min 6 chars)" minlength="6" required
+               class="w-full px-3 py-2 rounded border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 dark:bg-gray-700 dark:text-gray-100"/>
+        <input type="text" id="displayName" placeholder="Display Name" required
+               class="w-full px-3 py-2 rounded border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 dark:bg-gray-700 dark:text-gray-100"/>
+        <input type="url" id="profilePicUrl" placeholder="Profile Pic URL (optional)"
+               class="w-full px-3 py-2 rounded border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 dark:bg-gray-700 dark:text-gray-100"/>
+        <button type="submit" class="w-full bg-cyan-600 hover:bg-cyan-700 text-white py-2 rounded font-semibold transition">Sign up</button>
+      </form>
+      <p class="mt-4 text-center text-sm text-gray-600 dark:text-gray-400">
+        Already have an account?
+        <button id="switchToLogin" class="text-cyan-600 font-semibold hover:underline">Login</button>
+      </p>
+      <p class="mt-2 text-center text-sm text-red-600 dark:text-red-400 hidden" id="signupMessage"></p>
+    </div>
   </div>
-</body>
-</html>
+
+  <!-- Tabs Content -->
+  <section id="database" class="tab-content" x-cloak>
+    <h2 class="text-3xl font-bold mb-6 text-cyan-600">Database</h2>
+
+    <form id="dbForm" class="space-y-4 max-w-xl">
+      <div class="flex flex-col sm:flex-row gap-4">
+        <input type="text" id="clientName" placeholder="Client Name" required
+               class="flex-grow px-3 py-2 rounded border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 dark:bg-gray-700 dark:text-gray-100" />
+        <input type="tel" id="phoneNumber" placeholder="Phone Number" required pattern="[+0-9 ]{6,}"
+               class="flex-grow px-3 py-2 rounded border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 dark:bg-gray-700 dark:text-gray-100" />
+      </div>
+      <div class="flex flex-col sm:flex-row gap-4">
+        <input type="text" id="product" placeholder="Product" required
+               class="flex-grow px-3 py-2 rounded border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 dark:bg-gray-700 dark:text-gray-100" />
+        <input type="number" id="quantity" placeholder="Quantity" required min="1"
+               class="flex-grow px-3 py-2 rounded border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 dark:bg-gray-700 dark:text-gray-100" />
+      </div>
+
+      <button type="submit" class="bg-cyan-600 hover:bg-cyan-700 text-white px-5 py-2 rounded font-semibold transition">Add to Database</button>
+    </form>
+
+    <div class="mt-8 max-w-4xl overflow-x-auto border rounded-lg border-gray-300 dark:border-gray-700">
+      <table class="w-full text-left text-sm text-gray-900 dark:text-gray-100">
+        <thead class="bg-cyan-100 dark:bg-cyan-800">
+          <tr>
+            <th class="px-4 py-2 border border-cyan-300 dark:border-cyan-600">Client Name</th>
+            <th class="px-4 py-2 border border-cyan-300 dark:border-cyan-600">Phone Number</th>
+            <th class="px-4 py-2 border border-cyan-300 dark:border-cyan-600">Product</th>
+            <th class="px-4 py-2 border border-cyan-300 dark:border-cyan-600">Quantity</th>
+            <th class="px-4 py-2 border border-cyan-300 dark:border-cyan-600">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="dbTableBody"></tbody>
+      </table>
+    </div>
+
+    <div class="mt-6 max-w-xl space-y-2">
+      <label for="jsonImport" class="block font-semibold">Import JSON (Database):</label>
+      <textarea id="jsonImport" rows="6" class="w-full px-3 py-2 rounded border border-gray-300 dark:border-gray-700 dark:bg-gray-700 dark:text-gray-100" placeholder='Paste JSON array here...'></textarea>
+      <div class="flex gap-4 mt-2">
+        <button id="importJsonBtn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded font-semibold transition">Import JSON</button>
+        <button id="exportJsonBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded font-semibold transition">Export JSON</button>
+      </div>
+    </div>
+
+  </section>
+
+  <section id="settings" class="tab-content hidden" x-cloak>
+    <h2 class="text-3xl font-bold mb-6 text-cyan-600">Settings</h2>
+    <p class="mb-4">Send 6-digit Email Code</p>
+    <form id="emailForm" class="max-w-sm space-y-4">
+      <input type="email" id="emailInput" placeholder="Recipient Email" required
+             class="w-full px-3 py-2 rounded border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 dark:bg-gray-700 dark:text-gray-100" />
+      <button type="submit" class="bg-cyan-600 hover:bg-cyan-700 text-white px-5 py-2 rounded font-semibold transition">Send Code</button>
+    </form>
+    <p id="emailStatus" class="mt-3 text-sm text-green-600 dark:text-green-400"></p>
+
+    <div class="mt-8">
+      <label for="darkModeToggle" class="flex items-center cursor-pointer select-none">
+        <span class="mr-3 font-semibold">Dark Mode</span>
+        <input type="checkbox" id="darkModeToggle" class="sr-only" />
+        <span class="slider"></span>
+      </label>
+    </div>
+  </section>
+
+  <section id="account" class="tab-content hidden" x-cloak>
+    <h2 class="text-3xl font-bold mb-6 text-cyan-600">Account</h2>
+
+    <button id="saveAccountBtn" class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded font-semibold transition mb-4 w-full max-w-xs">Save Account Data</button>
+    <button id="loadAccountBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded font-semibold transition mb-4 w-full max-w-xs">Load Account Data</button>
+    <button id="logoutBtn" class="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded font-semibold transition mb-4 w-full max-w-xs">Logout</button>
+    <button id="deleteAccountBtn" class="bg-gray-700 hover:bg-gray-800 text-white px-5 py-2 rounded font-semibold transition max-w-xs w-full">Delete Account & Data</button>
+  </section>
+
+  <section id="collab" class="tab-content hidden" x-cloak>
+    <h2 class="text-3xl font-bold mb-6 text-cyan-600">Collab</h2>
+    <p>Collab tab content placeholder.</p>
+  </section>
+</main>
+
+<script>
+  // Initialize Firebase - Replace this config with your own from Firebase Console
+  const firebaseConfig = {
+    apiKey: "YOUR_FIREBASE_API_KEY",
+    authDomain: "YOUR_FIREBASE_AUTH_DOMAIN",
+    databaseURL: "YOUR_FIREBASE_DATABASE_URL",
+    projectId: "YOUR_FIREBASE_PROJECT_ID",
+    storageBucket: "YOUR_FIREBASE_STORAGE_BUCKET",
+    messagingSenderId: "YOUR_FIREBASE_MESSAGING_SENDER_ID",
+    appId: "YOUR_FIREBASE_APP_ID"
+  };
+  firebase.initializeApp(firebaseConfig);
+
+  // EmailJS init with your keys
+  emailjs.init('27xvHIt7kuuZewPB3');
+
+  // Elements
+  const authModal = document.getElementById('authModal');
+  const signupModal = document.getElementById('signupModal');
+  const authForm = document.getElementById('authForm');
+  const signupForm = document.getElementById('signupForm');
+  const switchToSignup = document.getElementById('switchToSignup');
+  const switchToLogin = document.getElementById('switchToLogin');
+  const authMessage = document.getElementById('authMessage');
+  const signupMessage = document.getElementById('signupMessage');
+  const profilePicTop = document.getElementById('profilePicTop');
+
+  const tabs = document.querySelectorAll('.tab-btn');
+  const tabContents = document.querySelectorAll('.tab-content');
+
+  const dbForm = document.getElementById('dbForm');
+  const dbTableBody = document.getElementById('dbTableBody');
+
+  const jsonImport = document.getElementById('jsonImport');
+  const importJsonBtn = document.getElementById('importJsonBtn');
+  const exportJsonBtn = document.getElementById('exportJsonBtn');
+
+  const emailForm = document.getElementById('emailForm');
+  const emailInput = document.getElementById('emailInput');
+  const emailStatus = document.getElementById('emailStatus');
+
+  const darkModeToggle = document.getElementById('darkModeToggle');
+
+  const saveAccountBtn = document.getElementById('saveAccountBtn');
+  const loadAccountBtn = document.getElementById('loadAccountBtn');
+  const logoutBtn = document.getElementById('logoutBtn');
+  const deleteAccountBtn = document.getElementById('deleteAccountBtn');
+
+  // Current user data cache
+  let currentUser = null;
+  let dbRef = null;
+  let databaseData = [];
+
+  // Utility: show toast notifications
+  function showToast(message, type = 'info', duration = 3500) {
+    const toast = document.createElement('div');
+    toast.className = `max-w-xs px-4 py-2 rounded shadow-md text-white ${
+      type === 'error' ? 'bg-red-600' :
+      type === 'success' ? 'bg-green-600' : 'bg-cyan-600'
+    }`;
+    toast.textContent = message;
+    document.getElementById('toast-container').appendChild(toast);
+    setTimeout(() => {
+      toast.remove();
+    }, duration);
+  }
+
+  // Authentication UI toggles
+  function showLogin() {
+    authModal.style.display = 'flex';
+    signupModal.style.display = 'none';
+    authMessage.textContent = '';
+    authMessage.classList.add('hidden');
+  }
+  function showSignup() {
+    signupModal.style.display = 'flex';
+    authModal.style.display = 'none';
+    signupMessage.textContent = '';
+    signupMessage.classList.add('hidden');
+  }
+
+  // Switch buttons
+  switchToSignup.onclick = () => showSignup();
+  switchToLogin.onclick = () => showLogin();
+
+  // Tab switching
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      tabs.forEach(t => t.classList.remove('bg-cyan-700'));
+      tab.classList.add('bg-cyan-700');
+      const target = tab.dataset.tab;
+      tabContents.forEach(c => c.classList.add('hidden'));
+      const activeTab = document.getElementById(target);
+      activeTab.classList.remove('hidden');
+    });
+  });
+  // Default tab
+  tabs[0].click();
+
+  // Load profile pic if available
+  function updateProfilePic(url) {
+    if(url){
+      profilePicTop.src = url;
+      profilePicTop.classList.remove('hidden');
+    } else {
+      profilePicTop.classList.add('hidden');
+      profilePicTop.src = '';
+    }
+  }
+
+  // Monitor auth state
+  firebase.auth().onAuthStateChanged(user => {
+    if (user) {
+      currentUser = user;
+      authModal.style.display = 'none';
+      signupModal.style.display = 'none';
+      updateProfilePic(user.photoURL);
+      // Load DB ref for current user
+      dbRef = firebase.database().ref('users/' + user.uid + '/database');
+      loadDatabaseData();
+      showToast(`Welcome, ${user.email}!`, 'success', 2000);
+    } else {
+      currentUser = null;
+      dbRef = null;
+      clearDatabaseTable();
+      showLogin();
+    }
+  });
+
+  // Login form submit
+  authForm.addEventListener('submit', e => {
+    e.preventDefault();
+    authMessage.classList.add('hidden');
+    const email = document.getElementById('authEmail').value.trim();
+    const password = document.getElementById('authPassword').value.trim();
+    firebase.auth().signInWithEmailAndPassword(email, password)
+      .catch(err => {
+        authMessage.textContent = err.message;
+        authMessage.classList.remove('hidden');
+      });
+  });
+
+  // Signup form submit
+  signupForm.addEventListener('submit', e => {
+    e.preventDefault();
+    signupMessage.classList.add('hidden');
+    const email = document.getElementById('signupEmail').value.trim();
+    const password = document.getElementById('signupPassword').value.trim();
+    const displayName = document.getElementById('displayName').value.trim();
+    const photoURL = document.getElementById('profilePicUrl').value.trim() || null;
+
+    if (password.length < 6) {
+      signupMessage.textContent = "Password must be at least 6 characters.";
+      signupMessage.classList.remove('hidden');
+      return;
+    }
+
+    firebase.auth().createUserWithEmailAndPassword(email, password)
+      .then(userCredential => {
+        return userCredential.user.updateProfile({
+          displayName: displayName,
+          photoURL: photoURL
+        });
+      })
+      .then(() => {
+        showToast("Account created! You are logged in.", 'success', 2500);
+      })
+      .catch(err => {
+        signupMessage.textContent = err.message;
+        signupMessage.classList.remove('hidden');
+      });
+  });
+
+  // Load database data from Firebase realtime DB
+  function loadDatabaseData() {
+    if(!dbRef) return;
+    dbRef.on('value', snapshot => {
+      const data = snapshot.val();
+      databaseData = data ? Object.entries(data).map(([key, val]) => ({id: key, ...val})) : [];
+      renderDatabaseTable();
+    });
+  }
+
+  // Render DB table rows
+  function renderDatabaseTable() {
+    dbTableBody.innerHTML = '';
+    if(databaseData.length === 0){
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td colspan="5" class="text-center py-4 text-gray-500 dark:text-gray-400">No records found.</td>`;
+      dbTableBody.appendChild(tr);
+      return;
+    }
+    databaseData.forEach(record => {
+      const tr = document.createElement('tr');
+      tr.className = 'border-b border-gray-300 dark:border-gray-700';
+      tr.innerHTML = `
+        <td class="px-4 py-2 border border-cyan-300 dark:border-cyan-600">${record.clientName}</td>
+        <td class="px-4 py-2 border border-cyan-300 dark:border-cyan-600">${record.phoneNumber}</td>
+        <td class="px-4 py-2 border border-cyan-300 dark:border-cyan-600">${record.product}</td>
+        <td class="px-4 py-2 border border-cyan-300 dark:border-cyan-600">${record.quantity}</td>
+        <td class="px-4 py-2 border border-cyan-300 dark:border-cyan-600 text-center">
+          <button class="edit-btn text-cyan-600 hover:text-cyan-800 font-semibold mr-2" data-id="${record.id}">Edit</button>
+          <button class="delete-btn text-red-600 hover:text-red-800 font-semibold" data-id="${record.id}">Delete</button>
+        </td>`;
+      dbTableBody.appendChild(tr);
+    });
+
+    // Add event listeners for edit/delete buttons
+    document.querySelectorAll('.edit-btn').forEach(btn => {
+      btn.onclick = () => {
+        const id = btn.dataset.id;
+        const record = databaseData.find(r => r.id === id);
+        if(record){
+          document.getElementById('clientName').value = record.clientName;
+          document.getElementById('phoneNumber').value = record.phoneNumber;
+          document.getElementById('product').value = record.product;
+          document.getElementById('quantity').value = record.quantity;
+          dbForm.dataset.editing = id;
+          dbForm.querySelector('button[type="submit"]').textContent = 'Update Record';
+          window.scrollTo({top:0, behavior:'smooth'});
+        }
+      };
+    });
+
+    document.querySelectorAll('.delete-btn').forEach(btn => {
+      btn.onclick = () => {
+        if(confirm("Delete this record?")) {
+          const id = btn.dataset.id;
+          dbRef.child(id).remove()
+            .then(() => showToast('Record deleted.', 'success'))
+            .catch(() => showToast('Failed to delete record.', 'error'));
+        }
+      };
+    });
+  }
+
+  // Clear DB table rows (used on logout)
+  function clearDatabaseTable() {
+    dbTableBody.innerHTML = '';
+    jsonImport.value = '';
+    databaseData = [];
+    dbForm.reset();
+    delete dbForm.dataset.editing;
+  }
+
+  // Add or update database record
+  dbForm.addEventListener('submit', e => {
+    e.preventDefault();
+    if (!currentUser) {
+      showToast("Please log in first.", "error");
+      return;
+    }
+
+    const clientName = document.getElementById('clientName').value.trim();
+    const phoneNumber = document.getElementById('phoneNumber').value.trim();
+    const product = document.getElementById('product').value.trim();
+    const quantity = parseInt(document.getElementById('quantity').value);
+
+    if(!clientName || !phoneNumber || !product || !quantity || quantity < 1) {
+      showToast("Please fill all fields correctly.", "error");
+      return;
+    }
+
+    const record = {clientName, phoneNumber, product, quantity};
+
+    if(dbForm.dataset.editing){
+      // Update existing
+      dbRef.child(dbForm.dataset.editing).set(record)
+        .then(() => {
+          showToast('Record updated.', 'success');
+          dbForm.reset();
+          delete dbForm.dataset.editing;
+          dbForm.querySelector('button[type="submit"]').textContent = 'Add to Database';
+        })
+        .catch(() => showToast('Failed to update record.', 'error'));
+    } else {
+      // Add new
+      dbRef.push(record)
+        .then(() => {
+          showToast('Record added.', 'success');
+          dbForm.reset();
+        })
+        .catch(() => showToast('Failed to add record.', 'error'));
+    }
+  });
+
+  // Import JSON button
+  importJsonBtn.onclick = () => {
+    if(!currentUser) {
+      showToast("Please log in first.", "error");
+      return;
+    }
+    let json;
+    try {
+      json = JSON.parse(jsonImport.value);
+      if(!Array.isArray(json)) throw new Error("JSON must be an array of records.");
+    } catch (e) {
+      showToast("Invalid JSON input.", "error");
+      return;
+    }
+    // Clear current DB and write new data
+    const updates = {};
+    json.forEach((item, i) => {
+      if(item.clientName && item.phoneNumber && item.product && item.quantity){
+        const newKey = dbRef.push().key;
+        updates[newKey] = item;
+      }
+    });
+    if(Object.keys(updates).length === 0){
+      showToast("No valid records found in JSON.", "error");
+      return;
+    }
+    // Remove all old data and write new
+    dbRef.set(updates)
+      .then(() => {
+        showToast('Database imported successfully.', 'success');
+        jsonImport.value = '';
+      })
+      .catch(() => showToast('Failed to import database.', 'error'));
+  };
+
+  // Export JSON button
+  exportJsonBtn.onclick = () => {
+    if(!currentUser) {
+      showToast("Please log in first.", "error");
+      return;
+    }
+    dbRef.once('value')
+      .then(snapshot => {
+        const data = snapshot.val();
+        if(!data){
+          showToast("No data to export.", "error");
+          return;
+        }
+        const arr = Object.values(data);
+        jsonImport.value = JSON.stringify(arr, null, 2);
+        showToast('Database JSON exported.', 'success');
+      })
+      .catch(() => showToast('Failed to export data.', 'error'));
+  };
+
+  // EmailJS form submit to send 6-digit code
+  emailForm.addEventListener('submit', e => {
+    e.preventDefault();
+    const email = emailInput.value.trim();
+    if(!email){
+      showToast('Enter an email address.', 'error');
+      return;
+    }
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+
+    emailjs.send('service_xanb1zn', 'template_vlj4fr6', {
+      to_email: email,
+      code: code
+    })
+    .then(() => {
+      emailStatus.textContent = `6-digit code sent to ${email}`;
+      emailInput.value = '';
+      showToast('Email sent successfully!', 'success');
+    }, () => {
+      emailStatus.textContent = 'Failed to send email. Try again.';
+      showToast('Email send failed.', 'error');
+    });
+  });
+
+  // Dark mode toggle load/save from localStorage
+  function applyDarkMode(enabled) {
+    if(enabled){
+      document.documentElement.classList.add('dark');
+      darkModeToggle.checked = true;
+    } else {
+      document.documentElement.classList.remove('dark');
+      darkModeToggle.checked = false;
+    }
+  }
+  // Initialize dark mode from localStorage or system
+  const darkPref = localStorage.getItem('darkMode');
+  if(darkPref === 'true'){
+    applyDarkMode(true);
+  } else if(darkPref === 'false'){
+    applyDarkMode(false);
+  } else {
+    // System preference fallback
+    applyDarkMode(window.matchMedia('(prefers-color-scheme: dark)').matches);
+  }
+
+  darkModeToggle.addEventListener('change', () => {
+    applyDarkMode(darkModeToggle.checked);
+    localStorage.setItem('darkMode', darkModeToggle.checked.toString());
+  });
+
+  // Save, load, logout, delete account buttons
+  saveAccountBtn.onclick = () => {
+    if(!currentUser){
+      showToast("Login required.", "error");
+      return;
+    }
+    // Save user data to localStorage
+    const userData = {
+      uid: currentUser.uid,
+      email: currentUser.email,
+      displayName: currentUser.displayName,
+      photoURL: currentUser.photoURL
+    };
+    localStorage.setItem('userData', JSON.stringify(userData));
+    showToast('Account data saved locally.', 'success');
+  };
+
+  loadAccountBtn.onclick = () => {
+    const userData = localStorage.getItem('userData');
+    if(userData){
+      try {
+        const data = JSON.parse(userData);
+        alert(`Loaded account:\nEmail: ${data.email}\nName: ${data.displayName}`);
+        showToast('Account data loaded.', 'success');
+      } catch {
+        showToast('Failed to load account data.', 'error');
+      }
+    } else {
+      showToast('No saved account data found.', 'error');
+    }
+  };
+
+  logoutBtn.onclick = () => {
+    firebase.auth().signOut()
+      .then(() => showToast('Logged out.', 'success'))
+      .catch(() => showToast('Logout failed.', 'error'));
+  };
+
+  deleteAccountBtn.onclick = () => {
+    if(!currentUser) {
+      showToast('Not logged in.', 'error');
+      return;
+    }
+    if(confirm("Delete your account and all data? This cannot be undone.")) {
+      // Delete user data in Firebase Realtime DB
+      firebase.database().ref('users/' + currentUser.uid).remove()
+        .then(() => currentUser.delete())
+        .then(() => {
+          showToast('Account and data deleted.', 'success');
+          currentUser = null;
+          dbRef = null;
+          clearDatabaseTable();
+          showLogin();
+        })
+        .catch(() => showToast('Failed to delete account.', 'error'));
+    }
+  };
+</script>
