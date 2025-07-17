@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>SmartOrders - Login</title>
+<title>SmartOrders - Login & Database</title>
 <style>
   body {
     font-family: Arial, sans-serif;
@@ -61,7 +61,6 @@
     background: #222;
     box-shadow: 0 3px 8px rgba(255,255,255,0.1);
   }
-  /* Login/Signup container smaller */
   #auth-page .container {
     max-width: 400px;
     margin-top: 80px;
@@ -73,7 +72,7 @@
     display: block;
     margin: 15px 0 5px;
   }
-  input[type=text], input[type=number], input[type=password], textarea, select {
+  input[type=text], input[type=password], input[type=number], select, textarea {
     width: 100%;
     padding: 8px;
     font-size: 1em;
@@ -81,7 +80,7 @@
     border-radius: 4px;
     box-sizing: border-box;
   }
-  body.dark input[type=text], body.dark input[type=number], body.dark input[type=password], body.dark textarea, body.dark select {
+  body.dark input[type=text], body.dark input[type=password], body.dark input[type=number], body.dark select, body.dark textarea {
     background: #333;
     border: 1px solid #555;
     color: #eee;
@@ -150,7 +149,6 @@
   body.dark tr:hover {
     background-color: #3a4d87;
   }
-  /* Toggle switch */
   .switch {
     position: relative;
     display: inline-block;
@@ -188,12 +186,10 @@
   input:checked + .slider:before {
     transform: translateX(24px);
   }
-  /* Export/Import text area */
   #export-area {
     height: 100px;
     font-family: monospace;
   }
-  /* Small footer text */
   #server-info {
     margin-top: 15px;
     font-size: 0.9em;
@@ -202,26 +198,18 @@
   body.dark #server-info {
     color: #aaa;
   }
-  /* Add Data Form */
   #add-data-form {
-    margin-top: 20px;
+    margin-top: 15px;
     display: grid;
-    grid-template-columns: repeat(auto-fit,minmax(140px,1fr));
-    gap: 10px 15px;
-    align-items: end;
+    grid-template-columns: 1fr 1fr 1fr 1fr auto;
+    gap: 10px;
+    align-items: center;
   }
-  #add-data-form label {
-    margin: 0 0 4px;
-    font-size: 0.9em;
-  }
-  #add-data-form input {
-    margin-top: 0;
-  }
-  #add-data-form button {
-    grid-column: span 1;
-    justify-self: start;
-    padding: 8px 16px;
-    font-weight: bold;
+  #database-controls {
+    margin-bottom: 15px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
   }
 </style>
 </head>
@@ -230,13 +218,13 @@
   SmartOrders
 </header>
 
-<div id="auth-page" class="container">
+<div id="auth-page" class="container" role="main">
   <nav>
     <button id="btn-login" class="active" aria-pressed="true">Login</button>
     <button id="btn-signup" aria-pressed="false">Sign Up</button>
   </nav>
 
-  <form id="login-form">
+  <form id="login-form" aria-label="Login Form">
     <label for="login-username">Username:</label>
     <input type="text" id="login-username" required autocomplete="username" />
     <label for="login-password">Password:</label>
@@ -244,7 +232,7 @@
     <button type="submit">Login</button>
   </form>
 
-  <form id="signup-form" style="display:none;">
+  <form id="signup-form" style="display:none;" aria-label="Sign Up Form">
     <label for="signup-username">Choose Username:</label>
     <input type="text" id="signup-username" required autocomplete="username" />
     <label for="signup-password">Choose Password:</label>
@@ -253,7 +241,7 @@
   </form>
 </div>
 
-<div id="main-app" style="display:none;">
+<div id="main-app" style="display:none;" role="main" aria-live="polite" aria-atomic="true">
   <nav class="top-nav" role="navigation" aria-label="Main Navigation">
     <button id="nav-db" class="active" aria-pressed="true">View Databases</button>
     <button id="nav-settings" aria-pressed="false">Settings</button>
@@ -263,99 +251,69 @@
     </div>
   </nav>
 
-  <section id="database-page" class="container" tabindex="0" aria-label="Database Table">
-    <label for="db-select">Select Database:</label>
-    <select id="db-select" style="margin-bottom: 15px;"></select>
+  <section id="database-page" class="container" tabindex="0" aria-label="Database Table and Controls">
+    <div id="database-controls">
+      <label for="database-select">Select Database:</label>
+      <select id="database-select" aria-label="Select Database"></select>
+      <button id="btn-create-db">Create New Database</button>
+    </div>
 
-    <table>
+    <table aria-label="Database content">
       <thead>
         <tr>
-          <th>Row Number</th>
           <th>Client Name</th>
           <th>Phone Number</th>
           <th>Product</th>
           <th>Quantity</th>
         </tr>
       </thead>
-      <tbody id="data-table-body">
-        <tr><td colspan="5">No database selected.</td></tr>
+      <tbody id="db-table-body">
       </tbody>
     </table>
 
-    <form id="add-data-form" aria-label="Add data to database">
-      <div>
-        <label for="input-name">Client Name:</label>
-        <input type="text" id="input-name" required autocomplete="off" />
-      </div>
-      <div>
-        <label for="input-phone">Phone Number:</label>
-        <input type="text" id="input-phone" required autocomplete="off" />
-      </div>
-      <div>
-        <label for="input-product">Product:</label>
-        <input type="text" id="input-product" required autocomplete="off" />
-      </div>
-      <div>
-        <label for="input-qty">Quantity:</label>
-        <input type="number" id="input-qty" min="1" required autocomplete="off" />
-      </div>
-      <div>
-        <button type="submit">Add Data</button>
-      </div>
+    <!-- Add Data Form -->
+    <form id="add-data-form" aria-label="Add new database entry">
+      <input id="input-name" type="text" placeholder="Client Name" required aria-required="true" />
+      <input id="input-phone" type="text" placeholder="Phone Number" required aria-required="true" />
+      <input id="input-product" type="text" placeholder="Product" required aria-required="true" />
+      <input id="input-qty" type="number" min="1" placeholder="Quantity" required aria-required="true" />
+      <button type="submit">Add</button>
     </form>
   </section>
 
-  <section id="settings-page" class="container" style="display:none;" tabindex="0" aria-label="Settings">
+  <section id="settings-page" class="container" style="display:none;" aria-label="Settings">
     <h2>Settings</h2>
-    <label for="darkmode-toggle">Dark Mode:</label>
+    <label for="dark-mode-toggle">Dark Mode:</label>
     <label class="switch">
-      <input type="checkbox" id="darkmode-toggle" aria-checked="false" />
+      <input type="checkbox" id="dark-mode-toggle" />
       <span class="slider"></span>
     </label>
-
-    <h3 style="margin-top: 30px;">Export / Import User Database</h3>
-    <p>Copy this text to save users or paste to load users on another device:</p>
-    <textarea id="export-area" aria-label="User database export/import"></textarea>
-    <br />
-    <button id="btn-export-users">Export Users</button>
-    <button id="btn-import-users">Import Users</button>
-
-    <h3 style="margin-top: 30px;">Manage Databases</h3>
-    <button id="btn-create-db">Create New Database</button>
-    <ul id="db-list" style="margin-top:10px; padding-left: 20px; list-style-type: disc;"></ul>
-
-    <div id="server-info">
-      <p>SmartOrders Version 1.0</p>
-      <p>LocalStorage used for data</p>
-    </div>
+    <div id="server-info"></div>
   </section>
 </div>
 
 <script>
-  // Current logged-in user
-  let currentUser = null;
-
-  // DOM references
+(() => {
+  // Elements
   const authPage = document.getElementById('auth-page');
   const mainApp = document.getElementById('main-app');
-  const btnLoginTab = document.getElementById('btn-login');
-  const btnSignupTab = document.getElementById('btn-signup');
   const loginForm = document.getElementById('login-form');
   const signupForm = document.getElementById('signup-form');
-  const navDb = document.getElementById('nav-db');
-  const navSettings = document.getElementById('nav-settings');
+  const btnLoginTab = document.getElementById('btn-login');
+  const btnSignupTab = document.getElementById('btn-signup');
+
+  const navDbBtn = document.getElementById('nav-db');
+  const navSettingsBtn = document.getElementById('nav-settings');
   const databasePage = document.getElementById('database-page');
   const settingsPage = document.getElementById('settings-page');
-  const btnLogout = document.getElementById('btn-logout');
+  const darkModeToggle = document.getElementById('dark-mode-toggle');
+
   const btnSwitchAccount = document.getElementById('btn-switch-account');
-  const darkModeToggle = document.getElementById('darkmode-toggle');
-  const exportArea = document.getElementById('export-area');
-  const btnExportUsers = document.getElementById('btn-export-users');
-  const btnImportUsers = document.getElementById('btn-import-users');
+  const btnLogout = document.getElementById('btn-logout');
+
+  const dbSelect = document.getElementById('database-select');
   const btnCreateDb = document.getElementById('btn-create-db');
-  const dbList = document.getElementById('db-list');
-  const dbSelect = document.getElementById('db-select');
-  const tableBody = document.getElementById('data-table-body');
+  const dbTableBody = document.getElementById('db-table-body');
 
   const addDataForm = document.getElementById('add-data-form');
   const inputName = document.getElementById('input-name');
@@ -363,16 +321,118 @@
   const inputProduct = document.getElementById('input-product');
   const inputQty = document.getElementById('input-qty');
 
-  // --- USER AUTHENTICATION ---
+  const serverInfo = document.getElementById('server-info');
 
-  function getUsers() {
-    const usersJson = localStorage.getItem('users');
-    return usersJson ? JSON.parse(usersJson) : {};
+  // State
+  let currentUser = null;
+  let databases = {}; // { dbName: [rows] }
+  let currentDbName = null;
+
+  // --- AUTH FUNCTIONS ---
+
+  // Load users from localStorage
+  function loadUsers() {
+    const data = localStorage.getItem('smartorders-users');
+    return data ? JSON.parse(data) : {};
   }
+
+  // Save users to localStorage
   function saveUsers(users) {
-    localStorage.setItem('users', JSON.stringify(users));
+    localStorage.setItem('smartorders-users', JSON.stringify(users));
   }
 
+  // Load current user's databases from localStorage
+  function loadUserDatabases(username) {
+    const data = localStorage.getItem(`smartorders-db-${username}`);
+    return data ? JSON.parse(data) : {};
+  }
+
+  // Save current user's databases
+  function saveUserDatabases(username, dbs) {
+    localStorage.setItem(`smartorders-db-${username}`, JSON.stringify(dbs));
+  }
+
+  // Switch to main app UI after login/signup
+  function enterApp(user) {
+    currentUser = user;
+    databases = loadUserDatabases(currentUser);
+    if (Object.keys(databases).length === 0) {
+      // If no databases, create a default one
+      databases['default'] = [];
+      saveUserDatabases(currentUser, databases);
+    }
+    currentDbName = Object.keys(databases)[0];
+    updateDbSelectOptions();
+    renderCurrentDatabase();
+
+    authPage.style.display = 'none';
+    mainApp.style.display = 'block';
+    updateNavButtons('db');
+    updateServerInfo();
+  }
+
+  // Render database select dropdown options
+  function updateDbSelectOptions() {
+    dbSelect.innerHTML = '';
+    for (const dbName of Object.keys(databases)) {
+      const option = document.createElement('option');
+      option.value = dbName;
+      option.textContent = dbName;
+      dbSelect.appendChild(option);
+    }
+    dbSelect.value = currentDbName;
+  }
+
+  // Render current database table
+  function renderCurrentDatabase() {
+    dbTableBody.innerHTML = '';
+    if (!currentDbName || !databases[currentDbName]) return;
+    const rows = databases[currentDbName];
+    for (const row of rows) {
+      const tr = document.createElement('tr');
+      ['clientName', 'phone', 'product', 'quantity'].forEach(key => {
+        const td = document.createElement('td');
+        td.textContent = row[key];
+        tr.appendChild(td);
+      });
+      dbTableBody.appendChild(tr);
+    }
+  }
+
+  // Login form submit
+  loginForm.addEventListener('submit', e => {
+    e.preventDefault();
+    const username = document.getElementById('login-username').value.trim();
+    const password = document.getElementById('login-password').value;
+    const users = loadUsers();
+    if (users[username] && users[username] === password) {
+      enterApp(username);
+    } else {
+      alert('Invalid username or password!');
+    }
+  });
+
+  // Signup form submit
+  signupForm.addEventListener('submit', e => {
+    e.preventDefault();
+    const username = document.getElementById('signup-username').value.trim();
+    const password = document.getElementById('signup-password').value;
+    if (!username || !password) {
+      alert('Please enter username and password');
+      return;
+    }
+    const users = loadUsers();
+    if (users[username]) {
+      alert('Username already exists!');
+      return;
+    }
+    users[username] = password;
+    saveUsers(users);
+    alert('Sign up successful! You can now log in.');
+    btnLoginTab.click();
+  });
+
+  // Toggle between login and signup forms
   btnLoginTab.addEventListener('click', () => {
     btnLoginTab.classList.add('active');
     btnLoginTab.setAttribute('aria-pressed', 'true');
@@ -381,7 +441,6 @@
     loginForm.style.display = 'block';
     signupForm.style.display = 'none';
   });
-
   btnSignupTab.addEventListener('click', () => {
     btnSignupTab.classList.add('active');
     btnSignupTab.setAttribute('aria-pressed', 'true');
@@ -391,282 +450,138 @@
     loginForm.style.display = 'none';
   });
 
-  signupForm.addEventListener('submit', e => {
-    e.preventDefault();
-    const username = document.getElementById('signup-username').value.trim();
-    const password = document.getElementById('signup-password').value;
-    if (!username || !password) {
-      alert('Please fill in username and password.');
-      return;
-    }
-    const users = getUsers();
-    if (users[username]) {
-      alert('Username already exists.');
-      return;
-    }
-    users[username] = { password };
-    saveUsers(users);
-    alert('Sign up successful! Please login.');
-    btnLoginTab.click();
-    signupForm.reset();
-  });
-
-  loginForm.addEventListener('submit', e => {
-    e.preventDefault();
-    const username = document.getElementById('login-username').value.trim();
-    const password = document.getElementById('login-password').value;
-    const users = getUsers();
-    if (!users[username] || users[username].password !== password) {
-      alert('Invalid username or password.');
-      return;
-    }
-    currentUser = username;
-    startApp();
-    loginForm.reset();
-  });
-
+  // Logout and switch account
   btnLogout.addEventListener('click', () => {
-    if (!confirm('Log out?')) return;
-    currentUser = null;
-    mainApp.style.display = 'none';
-    authPage.style.display = 'block';
-    setActivePage('db');
+    if (confirm('Are you sure you want to log out?')) {
+      logout();
+    }
   });
-
   btnSwitchAccount.addEventListener('click', () => {
-    if (!confirm('Switch account? You will be logged out.')) return;
-    currentUser = null;
-    mainApp.style.display = 'none';
-    authPage.style.display = 'block';
-    setActivePage('db');
+    logout();
   });
 
-  // --- PAGE NAVIGATION ---
+  function logout() {
+    currentUser = null;
+    databases = {};
+    currentDbName = null;
+    authPage.style.display = 'block';
+    mainApp.style.display = 'none';
+    loginForm.reset();
+    signupForm.reset();
+  }
 
-  function setActivePage(page) {
-    if (page === 'db') {
+  // --- NAVIGATION ---
+  navDbBtn.addEventListener('click', () => {
+    updateNavButtons('db');
+  });
+  navSettingsBtn.addEventListener('click', () => {
+    updateNavButtons('settings');
+  });
+
+  function updateNavButtons(section) {
+    if (section === 'db') {
+      navDbBtn.classList.add('active');
+      navDbBtn.setAttribute('aria-pressed', 'true');
+      navSettingsBtn.classList.remove('active');
+      navSettingsBtn.setAttribute('aria-pressed', 'false');
       databasePage.style.display = 'block';
       settingsPage.style.display = 'none';
-      navDb.classList.add('active');
-      navDb.setAttribute('aria-pressed', 'true');
-      navSettings.classList.remove('active');
-      navSettings.setAttribute('aria-pressed', 'false');
-    } else if (page === 'settings') {
+    } else {
+      navSettingsBtn.classList.add('active');
+      navSettingsBtn.setAttribute('aria-pressed', 'true');
+      navDbBtn.classList.remove('active');
+      navDbBtn.setAttribute('aria-pressed', 'false');
       databasePage.style.display = 'none';
       settingsPage.style.display = 'block';
-      navSettings.classList.add('active');
-      navSettings.setAttribute('aria-pressed', 'true');
-      navDb.classList.remove('active');
-      navDb.setAttribute('aria-pressed', 'false');
     }
   }
-
-  navDb.addEventListener('click', () => setActivePage('db'));
-  navSettings.addEventListener('click', () => setActivePage('settings'));
 
   // --- DARK MODE ---
+  // Load dark mode setting from localStorage
+  const darkModeStored = localStorage.getItem('smartorders-darkmode') === 'true';
+  darkModeToggle.checked = darkModeStored;
+  updateDarkMode(darkModeStored);
 
-  function loadDarkMode() {
-    const dm = localStorage.getItem('darkmode');
-    if (dm === 'true') {
+  darkModeToggle.addEventListener('change', e => {
+    updateDarkMode(e.target.checked);
+  });
+
+  function updateDarkMode(enabled) {
+    if (enabled) {
       document.body.classList.add('dark');
-      darkModeToggle.checked = true;
-      darkModeToggle.setAttribute('aria-checked', 'true');
     } else {
       document.body.classList.remove('dark');
-      darkModeToggle.checked = false;
-      darkModeToggle.setAttribute('aria-checked', 'false');
     }
+    localStorage.setItem('smartorders-darkmode', enabled);
   }
-
-  darkModeToggle.addEventListener('change', () => {
-    if (darkModeToggle.checked) {
-      document.body.classList.add('dark');
-      darkModeToggle.setAttribute('aria-checked', 'true');
-      localStorage.setItem('darkmode', 'true');
-    } else {
-      document.body.classList.remove('dark');
-      darkModeToggle.setAttribute('aria-checked', 'false');
-      localStorage.setItem('darkmode', 'false');
-    }
-  });
-
-  loadDarkMode();
-
-  // --- EXPORT / IMPORT USERS ---
-
-  btnExportUsers.addEventListener('click', () => {
-    exportArea.value = localStorage.getItem('users') || '{}';
-    alert('User data exported! You can copy it now.');
-  });
-
-  btnImportUsers.addEventListener('click', () => {
-    const text = exportArea.value.trim();
-    if (!text) {
-      alert('Please paste exported user data to import.');
-      return;
-    }
-    try {
-      const obj = JSON.parse(text);
-      if (typeof obj !== 'object') throw new Error('Invalid format');
-      localStorage.setItem('users', JSON.stringify(obj));
-      alert('User data imported successfully.');
-    } catch {
-      alert('Invalid JSON data.');
-    }
-  });
 
   // --- DATABASE MANAGEMENT ---
 
-  // Database keys: "db-{username}-{dbname}"
-
-  function getDatabasesForUser(user) {
-    return Object.keys(localStorage)
-      .filter(k => k.startsWith(`db-${user}-`))
-      .map(k => k.replace(`db-${user}-`, ''));
-  }
-
-  function saveDatabase(user, dbname, rows) {
-    localStorage.setItem(`db-${user}-${dbname}`, JSON.stringify(rows));
-  }
-
-  function loadDatabase(user, dbname) {
-    const data = localStorage.getItem(`db-${user}-${dbname}`);
-    return data ? JSON.parse(data) : [];
-  }
-
-  function updateDatabaseUI() {
-    if (!currentUser) return;
-    const dbs = getDatabasesForUser(currentUser);
-
-    // Update dropdown select
-    dbSelect.innerHTML = '';
-    dbs.forEach(name => {
-      const opt = document.createElement('option');
-      opt.value = name;
-      opt.textContent = name;
-      dbSelect.appendChild(opt);
-    });
-
-    // Update db list in settings
-    dbList.innerHTML = '';
-    dbs.forEach(name => {
-      const li = document.createElement('li');
-      li.textContent = name;
-      dbList.appendChild(li);
-    });
-
-    if (dbs.length > 0) {
-      dbSelect.value = dbs[0];
-      renderTable(loadDatabase(currentUser, dbs[0]));
-      addDataForm.style.display = 'grid';
-    } else {
-      tableBody.innerHTML = '<tr><td colspan="5">No databases yet. Create one!</td></tr>';
-      addDataForm.style.display = 'none';
-    }
-  }
-
-  function renderTable(rows) {
-    tableBody.innerHTML = '';
-    if (!rows || rows.length === 0) {
-      tableBody.innerHTML = '<tr><td colspan="5">No data rows in this database.</td></tr>';
-      return;
-    }
-    rows.forEach((row, i) => {
-      const tr = document.createElement('tr');
-      const rnTd = document.createElement('td');
-      rnTd.textContent = i + 1;
-      tr.appendChild(rnTd);
-
-      const nameTd = document.createElement('td');
-      nameTd.textContent = row.clientName || '';
-      tr.appendChild(nameTd);
-
-      const phoneTd = document.createElement('td');
-      phoneTd.textContent = row.phoneNumber || '';
-      tr.appendChild(phoneTd);
-
-      const productTd = document.createElement('td');
-      productTd.textContent = row.product || '';
-      tr.appendChild(productTd);
-
-      const qtyTd = document.createElement('td');
-      qtyTd.textContent = row.quantity || '';
-      tr.appendChild(qtyTd);
-
-      tableBody.appendChild(tr);
-    });
-  }
-
-  // Create new database prompt
+  // Create new database button
   btnCreateDb.addEventListener('click', () => {
-    const newDbName = prompt('Enter new database name (alphanumeric, no spaces):');
-    if (!newDbName) return;
-    if (!/^[a-zA-Z0-9_-]+$/.test(newDbName)) {
-      alert('Invalid name. Use letters, numbers, underscores or dashes only.');
+    const newDbName = prompt('Enter new database name:').trim();
+    if (!newDbName) {
+      alert('Database name cannot be empty.');
       return;
     }
-    const dbs = getDatabasesForUser(currentUser);
-    if (dbs.includes(newDbName)) {
-      alert('Database name already exists.');
+    if (databases[newDbName]) {
+      alert('A database with that name already exists.');
       return;
     }
-    saveDatabase(currentUser, newDbName, []);
-    updateDatabaseUI();
-    alert(`Database "${newDbName}" created!`);
+    databases[newDbName] = [];
+    currentDbName = newDbName;
+    saveUserDatabases(currentUser, databases);
+    updateDbSelectOptions();
+    renderCurrentDatabase();
   });
 
-  // On database selection change
+  // Change selected database from dropdown
   dbSelect.addEventListener('change', () => {
-    const selectedDb = dbSelect.value;
-    if (!selectedDb) {
-      tableBody.innerHTML = '<tr><td colspan="5">No database selected.</td></tr>';
-      addDataForm.style.display = 'none';
-      return;
-    }
-    const rows = loadDatabase(currentUser, selectedDb);
-    renderTable(rows);
-    addDataForm.style.display = 'grid';
+    currentDbName = dbSelect.value;
+    renderCurrentDatabase();
   });
 
-  // Add data form submission
+  // Add data form submit
   addDataForm.addEventListener('submit', e => {
     e.preventDefault();
-    const selectedDb = dbSelect.value;
-    if (!selectedDb) {
-      alert('Please select a database first.');
+    if (!currentDbName) {
+      alert('Please select or create a database first.');
       return;
     }
-    const name = inputName.value.trim();
+    const clientName = inputName.value.trim();
     const phone = inputPhone.value.trim();
     const product = inputProduct.value.trim();
-    const qty = Number(inputQty.value);
+    const quantity = Number(inputQty.value);
 
-    if (!name || !phone || !product || isNaN(qty) || qty < 1) {
-      alert('Please fill in all fields with valid data.');
+    if (!clientName || !phone || !product || quantity < 1) {
+      alert('Please fill all fields correctly.');
       return;
     }
 
-    const rows = loadDatabase(currentUser, selectedDb);
-    rows.push({
-      clientName: name,
-      phoneNumber: phone,
-      product: product,
-      quantity: qty,
+    databases[currentDbName].push({
+      clientName,
+      phone,
+      product,
+      quantity,
     });
-    saveDatabase(currentUser, selectedDb, rows);
-    renderTable(rows);
+
+    saveUserDatabases(currentUser, databases);
+    renderCurrentDatabase();
     addDataForm.reset();
   });
 
-  // --- START APP after login ---
-  function startApp() {
-    authPage.style.display = 'none';
-    mainApp.style.display = 'block';
-    updateDatabaseUI();
-    setActivePage('db');
-  }
-</script>
+  // --- SERVER INFO ---
 
+  function updateServerInfo() {
+    // Here, we simulate server info because no backend is present.
+    // Show current user and number of databases.
+    serverInfo.textContent = `Logged in as: ${currentUser} | Databases: ${Object.keys(databases).length}`;
+  }
+
+  // --- Initialize ---
+  btnLoginTab.click();
+
+})();
+</script>
 </body>
 </html>
