@@ -252,6 +252,8 @@
   });
 </script>
 
+  
+
 
     <h3>Current Database</h3>
     <table id="db-table">
@@ -268,6 +270,29 @@
       <input type="file" id="import-db" accept=".json" style="margin-left:10px;" />
     </div>
   </section>
+
+  <!-- CLIENT DASHBOARD TAB -->
+<section id="dashboard-tab" class="tab-content hidden">
+  <h2>Client Dashboard</h2>
+
+  <input type="text" id="search-client" placeholder="Search clients..." />
+
+  <table id="client-table">
+    <thead>
+      <tr>
+        <th>Client</th>
+        <th>Phone</th>
+        <th>Product</th>
+        <th>Quantity</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Client rows will be dynamically inserted here -->
+    </tbody>
+  </table>
+</section>
+
 
   <!-- SETTINGS TAB -->
   <section id="settings-tab" class="tab-content">
