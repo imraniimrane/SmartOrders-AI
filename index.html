@@ -5,219 +5,429 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Smart Orders</title>
 <style>
-  /* Reset & base */
+  /* Reset */
   * {
     box-sizing: border-box;
   }
   body {
     margin: 0;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: #f5f7fa;
-    color: #333;
+    background: #f0f4f8;
+    color: #222;
   }
-  /* Top bar */
-  .top-bar {
-    background-color: #00BCD4;
-    color: white;
+
+  /* Top bar with cyan background */
+  header.top-bar {
+    background-color: #00bcd4;
+    height: 56px;
     display: flex;
     align-items: center;
     padding: 0 20px;
-    height: 50px;
     user-select: none;
   }
   .top-bar .title {
     font-weight: 700;
-    font-size: 1.2rem;
+    font-size: 1.3rem;
+    color: white;
     flex-grow: 1;
   }
-  /* Tabs container */
-  .tabs {
+
+  /* Tabs container on the right side */
+  nav.tabs {
     display: flex;
-    gap: 20px;
+    gap: 24px;
   }
-  .tab {
+  nav.tabs .tab {
+    padding: 14px 18px;
     cursor: pointer;
-    padding: 10px 12px;
     font-weight: 600;
     font-size: 0.95rem;
-    border-radius: 4px 4px 0 0;
-    transition: background-color 0.25s, color 0.25s;
     color: white;
+    border-bottom: 3px solid transparent;
+    transition: all 0.25s ease;
   }
-  .tab:hover {
-    background-color: rgba(255 255 255 / 0.2);
+  nav.tabs .tab:hover {
+    background-color: rgba(255 255 255 / 0.15);
+    border-radius: 4px 4px 0 0;
   }
-  .tab.active {
+  nav.tabs .tab.active {
     background-color: white;
-    color: #00BCD4;
-    box-shadow: 0 -3px 0 0 #00BCD4 inset;
+    color: #00bcd4;
+    border-bottom: 3px solid #00bcd4;
+    border-radius: 4px 4px 0 0;
   }
 
-  /* Content area */
-  .content {
-    background: white;
+  /* Content container */
+  main.content {
     max-width: 900px;
-    margin: 20px auto;
+    margin: 24px auto;
+    background-color: white;
     border-radius: 8px;
-    padding: 25px 30px;
-    box-shadow: 0 4px 10px rgb(0 0 0 / 0.1);
-    min-height: 400px;
+    padding: 30px 32px;
+    box-shadow: 0 6px 16px rgb(0 0 0 / 0.1);
+    min-height: 480px;
   }
-  /* Hide all tab contents by default */
+
+  /* Hide inactive tab content */
   .tab-content {
     display: none;
   }
-  /* Show active tab content */
   .tab-content.active {
     display: block;
   }
 
-  /* Scroll bar fix */
-  ::-webkit-scrollbar {
-    width: 8px;
+  /* FORM STYLES */
+  form label {
+    display: block;
+    margin-bottom: 10px;
+    font-weight: 600;
   }
-  ::-webkit-scrollbar-thumb {
-    background: #00BCD4;
-    border-radius: 10px;
+  form input[type=text],
+  form input[type=tel],
+  form input[type=number],
+  form input[type=email] {
+    width: 100%;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1.5px solid #ccc;
+    font-size: 1rem;
+    transition: border-color 0.25s ease;
+  }
+  form input[type=text]:focus,
+  form input[type=tel]:focus,
+  form input[type=number]:focus,
+  form input[type=email]:focus {
+    outline: none;
+    border-color: #00bcd4;
+  }
+  button {
+    background-color: #00bcd4;
+    border: none;
+    color: white;
+    padding: 10px 20px;
+    font-weight: 600;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background-color 0.3s ease;
+  }
+  button:hover {
+    background-color: #0097a7;
+  }
+  hr {
+    margin: 28px 0;
+    border-color: #eee;
+  }
+
+  /* Specific for Settings tab */
+  #profilePreview {
+    margin-top: 12px;
+    max-width: 140px;
+    max-height: 140px;
+    border-radius: 50%;
+    display: none;
+    object-fit: cover;
+  }
+  input[type=file] {
+    cursor: pointer;
+  }
+  label.file-label {
+    display: inline-block;
+    margin-top: 8px;
+    cursor: pointer;
+    color: #00bcd4;
+    text-decoration: underline;
+    font-weight: 600;
+  }
+
+  /* Danger buttons */
+  .danger {
+    background-color: #e74c3c;
+  }
+  .danger:hover {
+    background-color: #c0392b;
+  }
+
+  /* Dark mode styles (body.dark) */
+  body.dark {
+    background-color: #121212;
+    color: #ddd;
+  }
+  body.dark main.content {
+    background-color: #222;
+    color: #ddd;
+  }
+  body.dark header.top-bar {
+    background-color: #0097a7;
+  }
+  body.dark nav.tabs .tab {
+    color: #ccc;
+  }
+  body.dark nav.tabs .tab.active {
+    background-color: #121212;
+    color: #00bcd4;
+    border-bottom-color: #00bcd4;
+  }
+  body.dark form input[type=text],
+  body.dark form input[type=tel],
+  body.dark form input[type=number],
+  body.dark form input[type=email] {
+    background-color: #333;
+    border-color: #555;
+    color: #ddd;
+  }
+  body.dark form input[type=text]:focus,
+  body.dark form input[type=tel]:focus,
+  body.dark form input[type=number]:focus,
+  body.dark form input[type=email]:focus {
+    border-color: #00bcd4;
+  }
+  body.dark button {
+    background-color: #0097a7;
+  }
+  body.dark button:hover {
+    background-color: #007c91;
+  }
+  body.dark .danger {
+    background-color: #c0392b;
+  }
+  body.dark .danger:hover {
+    background-color: #922d24;
   }
 </style>
 </head>
 <body>
 
-  <header class="top-bar">
-    <div class="title">Smart Orders</div>
-    <nav class="tabs">
-      <div class="tab active" data-tab="database">Database</div>
-      <div class="tab" data-tab="settings">Settings</div>
-      <div class="tab" data-tab="account">Account</div>
-      <div class="tab" data-tab="collab">Collab</div>
-    </nav>
-  </header>
+<header class="top-bar">
+  <div class="title">Smart Orders</div>
+  <nav class="tabs">
+    <div class="tab active" data-tab="database">Database</div>
+    <div class="tab" data-tab="settings">Settings</div>
+    <div class="tab" data-tab="account">Account</div>
+    <div class="tab" data-tab="collab">Collab</div>
+  </nav>
+</header>
 
-  <main class="content">
-    <section id="database" class="tab-content active">
-      <h2>Create Database</h2>
-      <form>
-        <label>
-          Client Name:<br />
-          <input type="text" placeholder="Enter client name" />
-        </label><br /><br />
-        <label>
-          Phone Number:<br />
-          <input type="tel" placeholder="Enter phone number" />
-        </label><br /><br />
-        <label>
-          Product:<br />
-          <input type="text" placeholder="Enter product" />
-        </label><br /><br />
-        <label>
-          Quantity:<br />
-          <input type="number" min="1" placeholder="Enter quantity" />
-        </label><br /><br />
-        <button type="submit">Add to Database</button>
-      </form>
-      <hr />
-      <button id="exportBtn">Export Database</button>
-      <button id="downloadBtn">Download Database (.json)</button>
-      <br /><br />
-      <label for="importInput" style="cursor:pointer; color:#00BCD4; text-decoration: underline;">
-        Import Database (.json)
-      </label>
-      <input type="file" id="importInput" accept=".json" style="display:none" />
-    </section>
+<main class="content">
 
-    <section id="settings" class="tab-content">
-      <h2>Settings</h2>
-      <label>
-        <input type="checkbox" id="darkModeToggle" />
-        Dark Mode
-      </label>
-      <hr />
-      <button id="aboutBtn">About</button><br /><br />
-      <button id="emailUsBtn">Email Us</button><br /><br />
-      <label>
-        Add Email for Extra Protection:<br />
-        <input type="email" placeholder="Enter your email" id="extraEmail" />
-      </label>
-      <button id="sendCodeBtn">Send 6-digit code</button>
-      <hr />
-      <label>
-        Profile Picture:<br />
-        <input type="file" id="profilePicInput" accept="image/*" />
-      </label>
-      <br />
-      <img id="profilePreview" alt="Profile preview" style="margin-top:10px; max-width:150px; border-radius:50%; display:none;" />
-    </section>
+  <!-- Database Tab -->
+  <section id="database" class="tab-content active">
+    <h2>Create Database</h2>
+    <form id="dbForm">
+      <label for="clientName">Client Name</label>
+      <input type="text" id="clientName" name="clientName" placeholder="Enter client name" required />
+      
+      <label for="phoneNumber">Phone Number</label>
+      <input type="tel" id="phoneNumber" name="phoneNumber" placeholder="Enter phone number" required />
+      
+      <label for="product">Product</label>
+      <input type="text" id="product" name="product" placeholder="Enter product" required />
+      
+      <label for="quantity">Quantity</label>
+      <input type="number" id="quantity" name="quantity" placeholder="Enter quantity" min="1" required />
+      
+      <button type="submit" style="margin-top:16px;">Add to Database</button>
+    </form>
 
-    <section id="account" class="tab-content">
-      <h2>Account</h2>
-      <button id="saveDataBtn">Save Data</button><br /><br />
-      <button id="loadDataBtn">Load Data</button><br /><br />
-      <button id="logoutBtn" style="color:#e74c3c;">Log Out</button><br /><br />
-      <button id="deleteAccountBtn" style="color:#e74c3c;">Delete Account and Data</button>
-    </section>
+    <hr />
 
-    <section id="collab" class="tab-content">
-      <h2>Collaboration (Coming Soon)</h2>
-      <p>This feature is a placeholder for future collaboration tools.</p>
-    </section>
-  </main>
+    <button id="exportBtn">Export Database</button>
+    <button id="downloadBtn">Download Database (.json)</button>
+
+    <br /><br />
+
+    <label for="importInput" class="file-label">Import Database (.json)</label>
+    <input type="file" id="importInput" accept=".json" style="display:none;" />
+  </section>
+
+  <!-- Settings Tab -->
+  <section id="settings" class="tab-content">
+    <h2>Settings</h2>
+
+    <label>
+      <input type="checkbox" id="darkModeToggle" /> Dark Mode
+    </label>
+
+    <hr />
+
+    <button id="aboutBtn">About</button><br /><br />
+    <button id="emailUsBtn">Email Us</button><br /><br />
+
+    <label for="extraEmail">Add Email for Extra Protection (will send 6-digit code):</label>
+    <input type="email" id="extraEmail" placeholder="Enter your email" />
+
+    <button id="sendCodeBtn" style="margin-top:8px;">Send 6-digit code</button>
+
+    <hr />
+
+    <label for="profilePicInput">Profile Picture:</label>
+    <input type="file" id="profilePicInput" accept="image/*" />
+    <br />
+    <img id="profilePreview" alt="Profile Picture Preview" />
+  </section>
+
+  <!-- Account Tab -->
+  <section id="account" class="tab-content">
+    <h2>Account</h2>
+    <button id="saveDataBtn">Save Data</button><br /><br />
+    <button id="loadDataBtn">Load Data</button><br /><br />
+    <button id="logoutBtn" class="danger">Log Out</button><br /><br />
+    <button id="deleteAccountBtn" class="danger">Delete Account and Data</button>
+  </section>
+
+  <!-- Collab Tab -->
+  <section id="collab" class="tab-content">
+    <h2>Collab (Coming Soon)</h2>
+    <p>This is a placeholder for collaboration features.</p>
+  </section>
+
+</main>
 
 <script>
-  // Tab switching
-  const tabs = document.querySelectorAll('.tab');
+  // Tabs switching
+  const tabs = document.querySelectorAll('nav.tabs .tab');
   const contents = document.querySelectorAll('.tab-content');
 
   tabs.forEach(tab => {
     tab.addEventListener('click', () => {
-      // Remove active from all tabs and contents
+      const target = tab.getAttribute('data-tab');
+
       tabs.forEach(t => t.classList.remove('active'));
       contents.forEach(c => c.classList.remove('active'));
-      
-      // Activate clicked tab and content
+
       tab.classList.add('active');
-      document.getElementById(tab.dataset.tab).classList.add('active');
+      document.getElementById(target).classList.add('active');
     });
   });
 
-  // Dark Mode Toggle
-  const darkToggle = document.getElementById('darkModeToggle');
-  darkToggle.addEventListener('change', () => {
-    if (darkToggle.checked) {
-      document.body.style.background = '#121212';
-      document.body.style.color = '#ddd';
-      document.querySelector('.content').style.background = '#222';
-      document.querySelector('.top-bar').style.backgroundColor = '#0097A7';
-      tabs.forEach(tab => {
-        if (!tab.classList.contains('active')) {
-          tab.style.color = '#aaa';
-        }
-      });
+  // Dark mode toggle logic
+  const darkModeToggle = document.getElementById('darkModeToggle');
+  darkModeToggle.addEventListener('change', () => {
+    if (darkModeToggle.checked) {
+      document.body.classList.add('dark');
     } else {
-      document.body.style.background = '#f5f7fa';
-      document.body.style.color = '#333';
-      document.querySelector('.content').style.background = 'white';
-      document.querySelector('.top-bar').style.backgroundColor = '#00BCD4';
-      tabs.forEach(tab => {
-        tab.style.color = 'white';
-      });
+      document.body.classList.remove('dark');
     }
   });
 
   // Profile picture preview
-  const profileInput = document.getElementById('profilePicInput');
+  const profilePicInput = document.getElementById('profilePicInput');
   const profilePreview = document.getElementById('profilePreview');
-
-  profileInput.addEventListener('change', e => {
+  profilePicInput.addEventListener('change', (e) => {
     const file = e.target.files[0];
-    if (file) {
-      const url = URL.createObjectURL(file);
-      profilePreview.src = url;
-      profilePreview.style.display = 'block';
-    }
+    if (!file) return;
+
+    const url = URL.createObjectURL(file);
+    profilePreview.src = url;
+    profilePreview.style.display = 'block';
   });
 
-  // (Placeholder) Export, Download, Import buttons can have real logic added later.
+  // Database form submission
+  const dbForm = document.getElementById('dbForm');
+  let databaseEntries = [];
+
+  dbForm.addEventListener('submit', e => {
+    e.preventDefault();
+
+    const clientName = dbForm.clientName.value.trim();
+    const phoneNumber = dbForm.phoneNumber.value.trim();
+    const product = dbForm.product.value.trim();
+    const quantity = parseInt(dbForm.quantity.value);
+
+    if (!clientName || !phoneNumber || !product || !quantity || quantity < 1) {
+      alert('Please fill in all fields correctly.');
+      return;
+    }
+
+    databaseEntries.push({ clientName, phoneNumber, product, quantity });
+    alert('Entry added to database.');
+
+    dbForm.reset();
+  });
+
+  // Export Database (alert JSON string)
+  const exportBtn = document.getElementById('exportBtn');
+  exportBtn.addEventListener('click', () => {
+    if (databaseEntries.length === 0) {
+      alert('Database is empty.');
+      return;
+    }
+    alert('Database JSON:\n\n' + JSON.stringify(databaseEntries, null, 2));
+  });
+
+  // Download Database JSON file
+  const downloadBtn = document.getElementById('downloadBtn');
+  downloadBtn.addEventListener('click', () => {
+    if (databaseEntries.length === 0) {
+      alert('Database is empty.');
+      return;
+    }
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(databaseEntries, null, 2));
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute('href', dataStr);
+    downloadAnchor.setAttribute('download', 'database.json');
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+  });
+
+  // Import Database JSON file
+  const importInput = document.getElementById('importInput');
+  importInput.addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(event) {
+      try {
+        const importedData = JSON.parse(event.target.result);
+        if (!Array.isArray(importedData)) throw new Error('Invalid data format');
+        databaseEntries = importedData;
+        alert('Database imported successfully.');
+      } catch (error) {
+        alert('Failed to import database: ' + error.message);
+      }
+    };
+    reader.readAsText(file);
+  });
+
+  // Email related placeholders (About, Email Us, Send Code)
+  document.getElementById('aboutBtn').addEventListener('click', () => {
+    alert('Smart Orders v1.0\nDeveloped by Your Company.');
+  });
+
+  document.getElementById('emailUsBtn').addEventListener('click', () => {
+    alert('Send your inquiries to support@smartorders.com');
+  });
+
+  document.getElementById('sendCodeBtn').addEventListener('click', () => {
+    const email = document.getElementById('extraEmail').value.trim();
+    if (!email) {
+      alert('Please enter an email address first.');
+      return;
+    }
+    // Placeholder for sending email with 6-digit code
+    alert(`A 6-digit code has been sent to ${email} (simulated).`);
+  });
+
+  // Account tab buttons placeholders
+  document.getElementById('saveDataBtn').addEventListener('click', () => {
+    alert('Save data functionality coming soon.');
+  });
+  document.getElementById('loadDataBtn').addEventListener('click', () => {
+    alert('Load data functionality coming soon.');
+  });
+  document.getElementById('logoutBtn').addEventListener('click', () => {
+    alert('Logged out successfully (simulated).');
+  });
+  document.getElementById('deleteAccountBtn').addEventListener('click', () => {
+    const confirmed = confirm('Are you sure you want to delete your account and all data? This action cannot be undone.');
+    if (confirmed) {
+      databaseEntries = [];
+      alert('Account and data deleted (simulated).');
+      // Reset UI if needed
+    }
+  });
 </script>
 
 </body>
