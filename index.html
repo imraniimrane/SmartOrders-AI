@@ -1,317 +1,3 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>SmartOrders - Login & Database</title>
-<style>
-  /* ... your existing CSS styles from your snippet ... */
-  body {
-    font-family: Arial, sans-serif;
-    margin: 0; padding: 0;
-    background: #f0f0f8;
-    color: #222;
-    transition: background 0.3s, color 0.3s;
-  }
-  body.dark {
-    background: #121212;
-    color: #eee;
-  }
-  header {
-    background: #2a5d9f;
-    color: white;
-    padding: 15px 20px;
-    font-size: 1.5em;
-    font-weight: bold;
-  }
-  nav.top-nav {
-    background: #2a5d9f;
-    display: flex;
-    justify-content: space-between;
-    padding: 10px 20px;
-    color: white;
-    user-select: none;
-  }
-  nav.top-nav button {
-    background: transparent;
-    border: none;
-    color: white;
-    font-size: 1em;
-    cursor: pointer;
-    padding: 8px 15px;
-    border-radius: 4px;
-    transition: background-color 0.2s;
-  }
-  nav.top-nav button:hover,
-  nav.top-nav button.active {
-    background-color: #1e4276;
-  }
-  nav.top-nav .right-buttons {
-    display: flex;
-    gap: 10px;
-  }
-  .container {
-    max-width: 900px;
-    margin: 20px auto 60px;
-    padding: 20px;
-    background: white;
-    border-radius: 6px;
-    box-shadow: 0 3px 8px rgba(0,0,0,0.2);
-  }
-  body.dark .container {
-    background: #222;
-    box-shadow: 0 3px 8px rgba(255,255,255,0.1);
-  }
-  #auth-page .container {
-    max-width: 400px;
-    margin-top: 80px;
-  }
-  h1, h2 {
-    margin-top: 0;
-  }
-  label {
-    display: block;
-    margin: 15px 0 5px;
-  }
-  input[type=text], input[type=password], input[type=number], select, textarea {
-    width: 100%;
-    padding: 8px;
-    font-size: 1em;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    box-sizing: border-box;
-  }
-  body.dark input[type=text], body.dark input[type=password], body.dark input[type=number], body.dark select, body.dark textarea {
-    background: #333;
-    border: 1px solid #555;
-    color: #eee;
-  }
-  button {
-    margin-top: 20px;
-    background: #2a5d9f;
-    color: white;
-    border: none;
-    padding: 10px;
-    font-size: 1em;
-    border-radius: 4px;
-    cursor: pointer;
-    user-select: none;
-  }
-  button:hover {
-    background: #1e4276;
-  }
-  nav {
-    display: flex;
-    justify-content: center;
-    margin-bottom: 20px;
-  }
-  nav button {
-    background: transparent;
-    color: inherit;
-    border: none;
-    font-weight: bold;
-    font-size: 1.1em;
-    padding: 10px 20px;
-    cursor: pointer;
-    border-bottom: 3px solid transparent;
-  }
-  body.dark nav button.active {
-    border-color: #6ea8ff;
-  }
-  table {
-    border-collapse: collapse;
-    width: 100%;
-    background: white;
-    border-radius: 6px;
-    overflow: hidden;
-    box-shadow: 0 3px 8px rgba(0,0,0,0.15);
-  }
-  body.dark table {
-    background: #222;
-    box-shadow: 0 3px 8px rgba(255,255,255,0.15);
-  }
-  th, td {
-    border: 1px solid #999;
-    padding: 10px 12px;
-    text-align: left;
-    user-select: text;
-  }
-  th {
-    background: #2a5d9f;
-    color: white;
-    user-select: none;
-  }
-  body.dark th {
-    background: #1a3b6f;
-  }
-  tr:hover {
-    background-color: #e0e7ff;
-  }
-  body.dark tr:hover {
-    background-color: #3a4d87;
-  }
-  .switch {
-    position: relative;
-    display: inline-block;
-    width: 50px;
-    height: 26px;
-    vertical-align: middle;
-  }
-  .switch input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-  }
-  .slider {
-    position: absolute;
-    cursor: pointer;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background-color: #ccc;
-    transition: .4s;
-    border-radius: 26px;
-  }
-  .slider:before {
-    position: absolute;
-    content: "";
-    height: 20px;
-    width: 20px;
-    left: 3px;
-    bottom: 3px;
-    background-color: white;
-    transition: .4s;
-    border-radius: 50%;
-  }
-  input:checked + .slider {
-    background-color: #2a5d9f;
-  }
-  input:checked + .slider:before {
-    transform: translateX(24px);
-  }
-  #export-area {
-    height: 100px;
-    font-family: monospace;
-  }
-  #server-info {
-    margin-top: 15px;
-    font-size: 0.9em;
-    color: #555;
-  }
-  body.dark #server-info {
-    color: #aaa;
-  }
-  #add-data-form {
-    margin-top: 15px;
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr 1fr auto;
-    gap: 10px;
-    align-items: center;
-  }
-  #database-controls {
-    margin-bottom: 15px;
-    display: flex;
-    gap: 10px;
-    align-items: center;
-  }
-  /* New style for Remember Me */
-  #remember-me-container {
-    margin-top: 10px;
-    display: flex;
-    align-items: center;
-  }
-  #remember-me-container input {
-    margin-right: 8px;
-  }
-</style>
-</head>
-<body>
-<header>
-  SmartOrders
-</header>
-
-<div id="auth-page" class="container" role="main">
-  <nav>
-    <button id="btn-login" class="active" aria-pressed="true">Login</button>
-    <button id="btn-signup" aria-pressed="false">Sign Up</button>
-  </nav>
-
-  <form id="login-form" aria-label="Login Form">
-    <label for="login-username">Username:</label>
-    <input type="text" id="login-username" required autocomplete="username" />
-    <label for="login-password">Password:</label>
-    <input type="password" id="login-password" required autocomplete="current-password" />
-    <div id="remember-me-container">
-      <input type="checkbox" id="remember-me" />
-      <label for="remember-me" style="user-select:none;">Remember Me</label>
-    </div>
-    <button type="submit">Login</button>
-  </form>
-
-  <form id="signup-form" style="display:none;" aria-label="Sign Up Form">
-    <label for="signup-username">Choose Username:</label>
-    <input type="text" id="signup-username" required autocomplete="username" />
-    <label for="signup-password">Choose Password:</label>
-    <input type="password" id="signup-password" required autocomplete="new-password" />
-    <button type="submit">Sign Up</button>
-  </form>
-</div>
-
-<div id="main-app" style="display:none;" role="main" aria-live="polite" aria-atomic="true">
-  <nav class="top-nav" role="navigation" aria-label="Main Navigation">
-    <button id="nav-db" class="active" aria-pressed="true">View Databases</button>
-    <button id="nav-settings" aria-pressed="false">Settings</button>
-    <div class="right-buttons">
-      <button id="btn-switch-account">Switch Account</button>
-      <button id="btn-logout">Log Out</button>
-    </div>
-  </nav>
-
-  <section id="database-page" class="container" tabindex="0" aria-label="Database Table and Controls">
-    <div id="database-controls">
-      <label for="database-select">Select Database:</label>
-      <select id="database-select" aria-label="Select Database"></select>
-      <button id="btn-create-db">Create New Database</button>
-    </div>
-
-    <table aria-label="Database content">
-      <thead>
-        <tr>
-          <th>Client Name</th>
-          <th>Phone Number</th>
-          <th>Product</th>
-          <th>Quantity</th>
-        </tr>
-      </thead>
-      <tbody id="db-table-body">
-      </tbody>
-    </table>
-
-    <!-- Add Data Form -->
-    <form id="add-data-form" aria-label="Add new database entry">
-      <input id="input-name" type="text" placeholder="Client Name" required aria-required="true" />
-      <input id="input-phone" type="text" placeholder="Phone Number" required aria-required="true" />
-      <input id="input-product" type="text" placeholder="Product" required aria-required="true" />
-      <input id="input-quantity" type="number" placeholder="Quantity" required aria-required="true" min="1" />
-      <button type="submit">Add</button>
-    </form>
-
-    <div id="export-section" style="margin-top:20px;">
-      <button id="btn-export">Export Data</button>
-      <button id="btn-clear-db">Clear Database</button>
-      <textarea id="export-area" readonly aria-label="Exported Data"></textarea>
-    </div>
-  </section>
-
-  <section id="settings-page" class="container" style="display:none;" aria-label="Settings">
-    <h2>Settings</h2>
-    <label for="theme-toggle">Dark Mode:</label>
-    <label class="switch" for="theme-toggle">
-      <input type="checkbox" id="theme-toggle" aria-checked="false" />
-      <span class="slider"></span>
-    </label>
-  </section>
-</div>
-
-<script>
 (() => {
   "use strict";
 
@@ -372,7 +58,6 @@
   const themeToggle = document.getElementById("theme-toggle");
 
   // === INITIALIZATION ===
-
   function init() {
     // Show login form with remembered username/password if any
     const remembered = localStorage.getItem(LS_REMEMBERED_KEY);
@@ -393,7 +78,6 @@
   }
 
   // === EVENT LISTENERS ===
-
   function setupEventListeners() {
     // Tab switching
     btnLoginTab.addEventListener("click", () => {
@@ -421,12 +105,10 @@
       const remember = rememberMeCheckbox.checked;
       const users = getUsers();
       if (users[username] && users[username].password === password) {
-        // Success!
         currentUser = username;
         showMainApp();
         if (remember) {
-          // Save to localStorage
-          localStorage.setItem(LS_REMEMBERED_KEY, JSON.stringify({username, password}));
+          localStorage.setItem(LS_REMEMBERED_KEY, JSON.stringify({ username, password }));
         } else {
           localStorage.removeItem(LS_REMEMBERED_KEY);
         }
@@ -450,21 +132,17 @@
         alert("Username already exists");
         return;
       }
-      users[username] = {password: password, databases: {}};
+      users[username] = { password: password, databases: {} };
       saveUsers(users);
       alert("Account created! You can now log in.");
       btnLoginTab.click();
     });
 
-    // Logout
-    btnLogout.addEventListener("click", () => {
-      logoutUser();
-    });
-    btnSwitchAccount.addEventListener("click", () => {
-      logoutUser();
-    });
+    // Logout & Switch Account
+    btnLogout.addEventListener("click", logoutUser);
+    btnSwitchAccount.addEventListener("click", logoutUser);
 
-    // Nav between database and settings pages
+    // Navigation buttons
     navDbBtn.addEventListener("click", () => {
       navDbBtn.classList.add("active");
       navDbBtn.setAttribute("aria-pressed", "true");
@@ -490,9 +168,7 @@
     });
 
     // Change selected database
-    databaseSelect.addEventListener("change", () => {
-      renderDatabaseTable();
-    });
+    databaseSelect.addEventListener("change", renderDatabaseTable);
 
     // Add new data entry
     addDataForm.addEventListener("submit", e => {
@@ -501,9 +177,7 @@
     });
 
     // Export data
-    btnExport.addEventListener("click", () => {
-      exportCurrentDatabase();
-    });
+    btnExport.addEventListener("click", exportCurrentDatabase);
 
     // Clear database
     btnClearDb.addEventListener("click", () => {
@@ -521,7 +195,6 @@
   }
 
   // === LOGIN & USER DATA ===
-
   function showMainApp() {
     authPage.style.display = "none";
     mainApp.style.display = "block";
@@ -544,14 +217,12 @@
       logoutUser();
       return;
     }
-    // Load databases list into select dropdown
     const userData = users[currentUser];
     const databases = userData.databases || {};
     databaseSelect.innerHTML = "";
 
     const dbNames = Object.keys(databases);
     if (dbNames.length === 0) {
-      // Add default DB
       addNewDatabase("default");
       return;
     }
@@ -589,19 +260,30 @@
       const td = document.createElement("td");
       td.colSpan = 4;
       td.style.textAlign = "center";
-      td.textContent = "(No data)";
+      td.textContent = "No entries found.";
       tr.appendChild(td);
       dbTableBody.appendChild(tr);
       return;
     }
-    dbData.forEach(entry => {
+    dbData.forEach((entry, idx) => {
       const tr = document.createElement("tr");
-      ["name", "phone", "product", "quantity"].forEach(field => {
-        const td = document.createElement("td");
-        td.textContent = entry[field] || "";
-        tr.appendChild(td);
-      });
+      tr.setAttribute("data-idx", idx);
+      tr.innerHTML = `
+        <td>${entry.name}</td>
+        <td>${entry.phone}</td>
+        <td>${entry.product}</td>
+        <td>${entry.quantity}</td>
+        <td><button aria-label="Delete entry" class="btn-delete" data-idx="${idx}">Delete</button></td>
+      `;
       dbTableBody.appendChild(tr);
+    });
+
+    // Attach delete handlers
+    dbTableBody.querySelectorAll(".btn-delete").forEach(btn => {
+      btn.addEventListener("click", e => {
+        const idx = parseInt(e.target.dataset.idx, 10);
+        deleteEntryAtIndex(idx);
+      });
     });
   }
 
@@ -609,52 +291,47 @@
     const name = inputName.value.trim();
     const phone = inputPhone.value.trim();
     const product = inputProduct.value.trim();
-    const quantity = inputQuantity.value.trim();
+    const quantity = parseInt(inputQuantity.value.trim(), 10);
 
-    if (!name || !phone || !product || !quantity) {
-      alert("Please fill all fields.");
-      return;
-    }
-    const qtyNum = Number(quantity);
-    if (isNaN(qtyNum) || qtyNum <= 0) {
-      alert("Quantity must be a positive number.");
+    if (!name || !phone || !product || isNaN(quantity) || quantity < 1) {
+      alert("Please fill all fields correctly.");
       return;
     }
 
     const users = getUsers();
     if (!users[currentUser]) return;
     const dbName = databaseSelect.value;
-    if (!users[currentUser].databases[dbName]) {
-      alert("Selected database missing.");
-      return;
-    }
+    if (!users[currentUser].databases[dbName]) return;
+
     users[currentUser].databases[dbName].push({
-      name: name,
-      phone: phone,
-      product: product,
-      quantity: qtyNum
+      name, phone, product, quantity,
     });
     saveUsers(users);
     renderDatabaseTable();
 
     // Reset form
     addDataForm.reset();
+    inputName.focus();
   }
 
-  function exportCurrentDatabase() {
+  function deleteEntryAtIndex(idx) {
     const users = getUsers();
     if (!users[currentUser]) return;
     const dbName = databaseSelect.value;
-    const dbData = users[currentUser].databases[dbName] || [];
-    exportArea.value = JSON.stringify(dbData, null, 2);
-    exportArea.focus();
-    exportArea.select();
+    if (!users[currentUser].databases[dbName]) return;
+    const arr = users[currentUser].databases[dbName];
+    if (idx >= 0 && idx < arr.length) {
+      arr.splice(idx, 1);
+      saveUsers(users);
+      renderDatabaseTable();
+    }
   }
 
   function clearCurrentDatabase() {
     const users = getUsers();
     if (!users[currentUser]) return;
     const dbName = databaseSelect.value;
+    if (!users[currentUser].databases[dbName]) return;
     users[currentUser].databases[dbName] = [];
     saveUsers(users);
     renderDatabaseTable();
@@ -663,30 +340,41 @@
   function clearDatabaseUI() {
     databaseSelect.innerHTML = "";
     dbTableBody.innerHTML = "";
-    exportArea.value = "";
   }
 
-  // === THEME ===
-  function setTheme(dark) {
-    if (dark) {
-      document.body.classList.add("dark");
+  function exportCurrentDatabase() {
+    const users = getUsers();
+    if (!users[currentUser]) return;
+    const dbName = databaseSelect.value;
+    if (!users[currentUser].databases[dbName]) return;
+    const dbData = users[currentUser].databases[dbName];
+    if (!dbData || dbData.length === 0) {
+      alert("No data to export.");
+      return;
+    }
+    exportArea.value = JSON.stringify(dbData, null, 2);
+    exportArea.style.display = "block";
+    exportArea.select();
+  }
+
+  // === THEME HANDLING ===
+  function setTheme(darkModeOn) {
+    if (darkModeOn) {
+      document.body.classList.add("dark-mode");
       themeToggle.setAttribute("aria-checked", "true");
-      themeToggle.checked = true;
     } else {
-      document.body.classList.remove("dark");
+      document.body.classList.remove("dark-mode");
       themeToggle.setAttribute("aria-checked", "false");
-      themeToggle.checked = false;
     }
   }
+
   function loadThemeFromStorage() {
-    const dark = localStorage.getItem("smartorders_theme_dark") === "1";
-    setTheme(dark);
+    const savedTheme = localStorage.getItem("smartorders_theme_dark");
+    const darkOn = savedTheme === "1";
+    themeToggle.checked = darkOn;
+    setTheme(darkOn);
   }
 
-  // Initialize the app
+  // Start the app
   init();
-
 })();
-</script>
-</body>
-</html>
