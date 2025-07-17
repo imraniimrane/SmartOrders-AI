@@ -1,651 +1,507 @@
 <!DOCTYPE html>
-<html lang="en" class="scroll-smooth" >
+<html lang="en">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Smart Orders - Dashboard</title>
-<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
-<script>
-  emailjs.init('27xvHIt7kuuZewPB3');
-</script>
-<script src="https://cdn.tailwindcss.com"></script>
+<title>Smart Orders</title>
 <style>
-  /* Custom toggle switch */
-  input[type=checkbox] + .slider {
-    position: relative;
-    display: inline-block;
-    width: 42px;
-    height: 22px;
-    background-color: #9ca3af; /* gray-400 */
-    border-radius: 9999px;
-    cursor: pointer;
-    vertical-align: middle;
-    transition: background-color 0.3s ease;
+  :root {
+    --cyan: #00bcd4;
+    --dark-bg: #121212;
+    --light-bg: #f5f5f5;
+    --dark-text: #eee;
+    --light-text: #222;
   }
-  input[type=checkbox]:checked + .slider {
-    background-color: #06b6d4; /* cyan-500 */
+  body {
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: var(--light-bg);
+    color: var(--light-text);
+    transition: background 0.3s, color 0.3s;
   }
-  input[type=checkbox] + .slider::before {
-    content: "";
-    position: absolute;
-    height: 18px;
-    width: 18px;
-    left: 2px;
-    top: 2px;
-    background: white;
+  body.dark {
+    background: var(--dark-bg);
+    color: var(--dark-text);
+  }
+  /* Top bar */
+  header {
+    display: flex;
+    align-items: center;
+    background: var(--cyan);
+    color: white;
+    padding: 10px 20px;
+  }
+  #logo-section {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+    font-size: 1.3rem;
+    user-select: none;
+  }
+  #profile-pic {
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
-    transition: transform 0.3s ease;
+    object-fit: cover;
+    border: 2px solid white;
   }
-  input[type=checkbox]:checked + .slider::before {
-    transform: translateX(20px);
+  nav {
+    display: flex;
+    gap: 15px;
+    margin-left: 40px;
+    flex-grow: 1;
   }
-  .hidden { display: none !important; }
-  [x-cloak] { display:none !important; }
+  nav button.tab-btn {
+    background: transparent;
+    border: none;
+    color: white;
+    font-weight: 600;
+    font-size: 1rem;
+    padding: 8px 12px;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: border-color 0.25s;
+  }
+  nav button.tab-btn.active {
+    border-bottom: 3px solid white;
+  }
+  /* Auth Buttons on right */
+  #auth-buttons {
+    display: flex;
+    gap: 15px;
+  }
+  #auth-buttons button {
+    background: white;
+    color: var(--cyan);
+    border: none;
+    padding: 7px 15px;
+    font-weight: 600;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  #auth-buttons button:hover {
+    background: #e0f7fa;
+  }
+  /* Container */
+  main {
+    padding: 20px;
+  }
+  /* Hide inactive tabs */
+  .tab-content {
+    display: none;
+    max-width: 800px;
+  }
+  .tab-content.active {
+    display: block;
+  }
+
+  /* Form inputs */
+  input, select, textarea {
+    width: 100%;
+    padding: 8px 10px;
+    margin: 8px 0 16px;
+    border: 1.8px solid #ccc;
+    border-radius: 6px;
+    font-size: 1rem;
+    transition: border-color 0.25s;
+  }
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--cyan);
+    outline: none;
+  }
+
+  /* Buttons */
+  .btn {
+    background: var(--cyan);
+    color: white;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 24px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  .btn:hover {
+    background: #0097a7;
+  }
+  /* Secondary btn */
+  .btn-secondary {
+    background: #e0e0e0;
+    color: var(--cyan);
+  }
+  .btn-secondary:hover {
+    background: #b2ebf2;
+  }
+
+  /* Table styles */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+  }
+  th, td {
+    border: 1.5px solid #ccc;
+    padding: 10px;
+    text-align: left;
+  }
+  th {
+    background: var(--cyan);
+    color: white;
+  }
+  body.dark th {
+    background: #007c91;
+  }
+
+  /* Checkbox label */
+  label.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+  }
+  input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+  }
+
+  /* Profile pic upload */
+  #profile-pic-input {
+    margin-top: 6px;
+  }
+
+  /* Email status */
+  #email-status {
+    font-weight: 600;
+    margin-top: 8px;
+  }
+
+  /* Misc */
+  .danger {
+    background: #e53935;
+  }
+  .danger:hover {
+    background: #b71c1c;
+  }
 </style>
 </head>
-<body class="bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200 min-h-screen flex flex-col">
-
-<!-- HEADER -->
-<header class="flex items-center justify-between bg-cyan-600 dark:bg-cyan-700 px-6 py-3 shadow-md sticky top-0 z-50">
-  <div class="flex items-center space-x-4">
-    <img id="profilePicTop" src="" alt="Profile" class="w-10 h-10 rounded-full hidden border-2 border-white" />
-    <h1 class="text-white text-xl font-bold select-none">Smart Orders</h1>
+<body>
+<header>
+  <div id="logo-section">
+    <img id="profile-pic" src="https://i.pravatar.cc/36" alt="Profile Picture" />
+    <div>Smart Orders</div>
   </div>
-  <nav class="space-x-2">
-    <button class="tab-btn bg-cyan-700 hover:bg-cyan-800 text-white px-3 py-1 rounded font-semibold transition" data-tab="dashboard">Dashboard</button>
-    <button class="tab-btn hover:bg-cyan-700 text-white px-3 py-1 rounded font-semibold transition" data-tab="settings">Settings</button>
-    <button class="tab-btn hover:bg-cyan-700 text-white px-3 py-1 rounded font-semibold transition" data-tab="account">Account</button>
-    <button class="tab-btn hover:bg-cyan-700 text-white px-3 py-1 rounded font-semibold transition" data-tab="collab">Collab</button>
+  <nav>
+    <button class="tab-btn active" data-tab="database-tab">Database</button>
+    <button class="tab-btn" data-tab="settings-tab">Settings</button>
+    <button class="tab-btn" data-tab="account-tab">Account</button>
+    <button class="tab-btn" data-tab="collab-tab">Collab</button>
   </nav>
-  <button id="authToggleBtn" class="bg-white text-cyan-700 font-semibold px-4 py-1 rounded hover:bg-cyan-100 transition">Login / Signup</button>
+  <div id="auth-buttons">
+    <button id="btn-login">Log In</button>
+    <button id="btn-signup">Sign Up</button>
+  </div>
 </header>
 
-<!-- TOAST CONTAINER -->
-<div id="toast-container" class="fixed top-5 right-5 flex flex-col space-y-2 z-50"></div>
+<main>
+  <!-- LOGIN FORM -->
+  <section id="login-form" class="tab-content">
+    <h2>Log In</h2>
+    <input type="email" id="login-email" placeholder="Email" required />
+    <input type="password" id="login-password" placeholder="Password" required />
+    <button class="btn" id="login-submit">Log In</button>
+    <p id="login-msg" style="color:red;"></p>
+  </section>
 
-<!-- MAIN -->
-<main class="flex-grow max-w-5xl mx-auto p-6">
+  <!-- SIGNUP FORM -->
+  <section id="signup-form" class="tab-content">
+    <h2>Sign Up</h2>
+    <input type="email" id="signup-email" placeholder="Email" required />
+    <input type="password" id="signup-password" placeholder="Password (min 6 chars)" required />
+    <button class="btn" id="signup-submit">Sign Up</button>
+    <p id="signup-msg" style="color:red;"></p>
+  </section>
 
-  <!-- Dashboard Tab -->
-  <section id="dashboard" class="tab-content">
-    <h2 class="text-3xl font-bold mb-6 text-cyan-600">Dashboard</h2>
-    <form id="dbForm" class="space-y-4 max-w-xl bg-white dark:bg-gray-800 p-6 rounded shadow-md">
-      <div>
-        <label for="clientName" class="block font-semibold mb-1">Client Name</label>
-        <input type="text" id="clientName" required placeholder="Client Name"
-          class="w-full px-3 py-2 rounded border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 dark:bg-gray-700 dark:text-gray-100" />
-      </div>
-      <div>
-        <label for="phoneNumber" class="block font-semibold mb-1">Phone Number</label>
-        <input type="text" id="phoneNumber" required placeholder="Phone Number"
-          class="w-full px-3 py-2 rounded border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 dark:bg-gray-700 dark:text-gray-100" />
-      </div>
-      <div>
-        <label for="product" class="block font-semibold mb-1">Product</label>
-        <input type="text" id="product" required placeholder="Product"
-          class="w-full px-3 py-2 rounded border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 dark:bg-gray-700 dark:text-gray-100" />
-      </div>
-      <div>
-        <label for="quantity" class="block font-semibold mb-1">Quantity</label>
-        <input type="number" id="quantity" required min="1" placeholder="Quantity"
-          class="w-full px-3 py-2 rounded border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 dark:bg-gray-700 dark:text-gray-100" />
-      </div>
-      <button type="submit" class="bg-cyan-600 hover:bg-cyan-700 text-white px-6 py-2 rounded font-semibold transition w-full">Add to Database</button>
+  <!-- DATABASE TAB -->
+  <section id="database-tab" class="tab-content active">
+    <h2>Database</h2>
+    <form id="db-form">
+      <input type="text" id="client-name" placeholder="Client Name" required />
+      <input type="tel" id="phone-number" placeholder="Phone Number" required />
+      <input type="text" id="product" placeholder="Product" required />
+      <input type="number" id="quantity" placeholder="Quantity" min="1" required />
+      <button type="submit" class="btn">Add to Database</button>
     </form>
 
-    <div class="mt-10 overflow-x-auto">
-      <table class="min-w-full bg-white dark:bg-gray-800 rounded shadow-md overflow-hidden">
-        <thead class="bg-cyan-600 text-white">
-          <tr>
-            <th class="px-4 py-3 text-left">Client Name</th>
-            <th class="px-4 py-3 text-left">Phone Number</th>
-            <th class="px-4 py-3 text-left">Product</th>
-            <th class="px-4 py-3 text-left">Quantity</th>
-            <th class="px-4 py-3 text-center">Actions</th>
-          </tr>
-        </thead>
-        <tbody id="dbTableBody"></tbody>
-      </table>
-    </div>
+    <h3>Current Database</h3>
+    <table id="db-table">
+      <thead>
+        <tr><th>Client Name</th><th>Phone Number</th><th>Product</th><th>Quantity</th></tr>
+      </thead>
+      <tbody>
+        <!-- Data rows here -->
+      </tbody>
+    </table>
 
-    <div class="mt-8 max-w-xl space-y-2">
-      <label for="jsonImport" class="block font-semibold mb-2">Import JSON Database:</label>
-      <textarea id="jsonImport" rows="6" placeholder='Paste JSON array here...'
-        class="w-full px-4 py-3 rounded border border-gray-300 dark:border-gray-700 dark:bg-gray-700 dark:text-gray-100 resize-none"></textarea>
-      <div class="flex gap-4 mt-2">
-        <button id="importJsonBtn" class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded font-semibold transition flex-1">Import JSON</button>
-        <button id="exportJsonBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded font-semibold transition flex-1">Export JSON</button>
-      </div>
+    <div style="margin-top:15px;">
+      <button class="btn-secondary" id="export-db">Export Database (.json)</button>
+      <input type="file" id="import-db" accept=".json" style="margin-left:10px;" />
     </div>
   </section>
 
-  <!-- Settings Tab -->
-  <section id="settings" class="tab-content hidden" x-cloak>
-    <h2 class="text-3xl font-bold mb-6 text-cyan-600">Settings</h2>
-    <p class="mb-4">Send 6-digit Email Code</p>
-    <form id="emailForm" class="max-w-sm space-y-4">
-      <input type="email" id="emailInput" placeholder="Recipient Email" required
-        class="w-full px-4 py-3 rounded border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 dark:bg-gray-700 dark:text-gray-100" />
-      <button type="submit" class="bg-cyan-600 hover:bg-cyan-700 text-white px-6 py-3 rounded font-semibold transition w-full">Send Code</button>
+  <!-- SETTINGS TAB -->
+  <section id="settings-tab" class="tab-content">
+    <h2>Settings</h2>
+    <label class="checkbox-label"><input type="checkbox" id="dark-mode-toggle" /> Dark Mode</label>
+    <hr />
+    <h3>About</h3>
+    <p>Smart Orders is your modern order management app.</p>
+    <hr />
+    <h3>Email Us</h3>
+    <form id="email-form">
+      <input type="email" id="email-to" placeholder="Recipient Email" required />
+      <input type="text" id="email-subject" placeholder="Subject" required />
+      <textarea id="email-message" placeholder="Your message..." rows="5" required></textarea>
+      <button type="submit" class="btn">Send Email</button>
+      <div id="email-status"></div>
     </form>
-    <p id="emailStatus" class="mt-3 font-semibold"></p>
-
-    <div class="mt-10 space-y-4">
-      <div>
-        <label for="darkModeToggle" class="flex items-center cursor-pointer select-none">
-          <input type="checkbox" id="darkModeToggle" class="hidden" />
-          <span class="slider mr-3"></span>
-          <span class="text-gray-900 dark:text-gray-100 font-semibold">Dark Mode</span>
-        </label>
-      </div>
-
-      <div>
-        <button id="showDbViewerBtn" class="bg-cyan-600 hover:bg-cyan-700 text-white px-5 py-2 rounded font-semibold transition">View Database JSON</button>
-        <pre id="dbViewer" class="hidden mt-4 p-4 bg-gray-100 dark:bg-gray-800 rounded max-h-96 overflow-auto text-sm font-mono"></pre>
-      </div>
-
-      <div>
-        <h3 class="font-semibold text-lg mb-1">About</h3>
-        <p class="text-gray-600 dark:text-gray-400">Smart Orders app &copy; 2025. Made with ❤️.</p>
-      </div>
-
-      <div>
-        <button id="emailUsBtn" class="text-cyan-700 dark:text-cyan-400 underline">Email Us</button>
-      </div>
-    </div>
+    <hr />
+    <h3>Extra Protection Email</h3>
+    <input type="email" id="extra-email" placeholder="Add extra protection email" />
+    <button id="extra-email-btn" class="btn-secondary">Send Verification Code</button>
+    <p id="extra-email-msg" style="color:green;"></p>
+    <hr />
+    <h3>Profile Picture</h3>
+    <input type="file" id="profile-pic-input" accept="image/*" />
   </section>
 
-  <!-- Account Tab -->
-  <section id="account" class="tab-content hidden" x-cloak>
-    <h2 class="text-3xl font-bold mb-6 text-cyan-600">Account</h2>
-    <div class="space-y-4 max-w-sm">
-      <button id="saveAccountBtn" class="w-full bg-green-600 hover:bg-green-700 text-white px-5 py-3 rounded font-semibold transition">Save Data Locally</button>
-      <button id="loadAccountBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded font-semibold transition">Load Data Locally</button>
-      <button id="logoutBtn" class="w-full bg-yellow-500 hover:bg-yellow-600 text-white px-5 py-3 rounded font-semibold transition">Logout</button>
-      <button id="deleteAccountBtn" class="w-full bg-red-600 hover:bg-red-700 text-white px-5 py-3 rounded font-semibold transition">Delete Account & Data</button>
-    </div>
+  <!-- ACCOUNT TAB -->
+  <section id="account-tab" class="tab-content">
+    <h2>Account</h2>
+    <button class="btn" id="save-data-btn">Save Data to Cloud</button>
+    <button class="btn" id="load-data-btn" style="margin-left:10px;">Load Data from Cloud</button>
+    <button class="btn-danger danger" id="delete-account-btn" style="margin-left:10px;">Delete Account & Data</button>
+    <button class="btn-secondary" id="logout-btn" style="margin-left:10px;">Log Out</button>
+    <p id="account-msg" style="margin-top:15px; font-weight:bold;"></p>
   </section>
 
-  <!-- Collab Tab (Placeholder) -->
-  <section id="collab" class="tab-content hidden" x-cloak>
-    <h2 class="text-3xl font-bold mb-6 text-cyan-600">Collaboration</h2>
-    <p>Coming soon...</p>
+  <!-- COLLAB TAB -->
+  <section id="collab-tab" class="tab-content">
+    <h2>Collab (Placeholder)</h2>
+    <p>This section is under development.</p>
   </section>
 </main>
 
-<!-- LOGIN & SIGNUP MODAL -->
-<div id="authModal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 hidden z-50">
-  <div class="bg-white dark:bg-gray-800 rounded shadow-lg max-w-md w-full p-6 relative">
-    <button id="authModalClose" class="absolute top-3 right-3 text-gray-600 hover:text-gray-900 dark:hover:text-gray-300 text-2xl font-bold">&times;</button>
-    <h3 id="authModalTitle" class="text-2xl font-bold mb-4 text-cyan-600">Login</h3>
-    <form id="authForm" class="space-y-4">
-      <input type="email" id="authEmail" placeholder="Email" required
-        class="w-full px-4 py-3 rounded border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 dark:bg-gray-700 dark:text-gray-100" />
-      <input type="password" id="authPassword" placeholder="Password" required
-        class="w-full px-4 py-3 rounded border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 dark:bg-gray-700 dark:text-gray-100" />
-      <button type="submit" class="w-full bg-cyan-600 hover:bg-cyan-700 text-white px-5 py-3 rounded font-semibold transition">Login</button>
-    </form>
-    <p class="mt-4 text-center text-sm dark:text-gray-300">
-      Don't have an account?
-      <button id="switchToSignupBtn" class="text-cyan-600 font-semibold hover:underline">Sign up</button>
-    </p>
-  </div>
-</div>
-
+<script src="https://cdn.emailjs.com/dist/email.min.js"></script>
 <script>
-  // Firebase config - replace with your Firebase project config here
-  const firebaseConfig = {
-    apiKey: "YOUR_FIREBASE_API_KEY",
-    authDomain: "YOUR_FIREBASE_AUTH_DOMAIN",
-    databaseURL: "YOUR_FIREBASE_DATABASE_URL",
-    projectId: "YOUR_FIREBASE_PROJECT_ID",
-    storageBucket: "YOUR_FIREBASE_STORAGE_BUCKET",
-    messagingSenderId: "YOUR_FIREBASE_MESSAGING_SENDER_ID",
-    appId: "YOUR_FIREBASE_APP_ID"
-  };
-  firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
-  const database = firebase.database();
-
-  // Elements
-  const tabs = document.querySelectorAll('.tab-btn');
-  const tabContents = document.querySelectorAll('.tab-content');
-  const authToggleBtn = document.getElementById('authToggleBtn');
-  const authModal = document.getElementById('authModal');
-  const authModalClose = document.getElementById('authModalClose');
-  const authModalTitle = document.getElementById('authModalTitle');
-  const authForm = document.getElementById('authForm');
-  const switchToSignupBtn = document.getElementById('switchToSignupBtn');
-  const profilePicTop = document.getElementById('profilePicTop');
-
-  // Database elements
-  const dbForm = document.getElementById('dbForm');
-  const dbTableBody = document.getElementById('dbTableBody');
-  const exportJsonBtn = document.getElementById('exportJsonBtn');
-  const importJsonBtn = document.getElementById('importJsonBtn');
-  const jsonImport = document.getElementById('jsonImport');
-
-  // Settings elements
-  const darkModeToggle = document.getElementById('darkModeToggle');
-  const emailForm = document.getElementById('emailForm');
-  const emailInput = document.getElementById('emailInput');
-  const emailStatus = document.getElementById('emailStatus');
-  const showDbViewerBtn = document.getElementById('showDbViewerBtn');
-  const dbViewer = document.getElementById('dbViewer');
-  const emailUsBtn = document.getElementById('emailUsBtn');
-
-  // Account elements
-  const saveAccountBtn = document.getElementById('saveAccountBtn');
-  const loadAccountBtn = document.getElementById('loadAccountBtn');
-  const logoutBtn = document.getElementById('logoutBtn');
-  const deleteAccountBtn = document.getElementById('deleteAccountBtn');
-
-  let currentUser = null;
-  let currentDbEntries = [];
-  let dbRef = null;
-  let isSignupMode = false;
-
-  // Toast function
-  function showToast(message, type = 'info') {
-    const toast = document.createElement('div');
-    toast.className = `max-w-xs px-4 py-3 rounded shadow-md text-white ${
-      type === 'success' ? 'bg-green-600' :
-      type === 'error' ? 'bg-red-600' :
-      'bg-gray-700'
-    }`;
-    toast.textContent = message;
-    document.getElementById('toast-container').appendChild(toast);
-    setTimeout(() => {
-      toast.remove();
-    }, 3500);
-  }
-
-  // Tab switching
-  tabs.forEach(btn => {
-    btn.addEventListener('click', () => {
-      tabs.forEach(t => t.classList.remove('bg-cyan-700'));
-      btn.classList.add('bg-cyan-700');
-      const target = btn.dataset.tab;
-      tabContents.forEach(c => {
-        if (c.id === target) c.classList.remove('hidden');
-        else c.classList.add('hidden');
-      });
-    });
-  });
-
-  // Default tab - Dashboard
-  document.querySelector('[data-tab="dashboard"]').click();
-
-  // Dark mode init from localStorage or system
-  const savedDarkMode = localStorage.getItem('darkMode');
-  if(savedDarkMode !== null) {
-    darkModeToggle.checked = savedDarkMode === 'true';
-  } else {
-    darkModeToggle.checked = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  }
-  updateDarkMode();
-
-  darkModeToggle.addEventListener('change', updateDarkMode);
-  function updateDarkMode() {
-    if (darkModeToggle.checked) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('darkMode', 'true');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('darkMode', 'false');
-    }
-  }
-
-  // Auth Modal show/hide
-  authToggleBtn.onclick = () => {
-    if(currentUser) {
-      showToast("Already logged in.", "info");
-      return;
-    }
-    isSignupMode = false;
-    setAuthMode();
-    authModal.classList.remove('hidden');
-  };
-  authModalClose.onclick = () => authModal.classList.add('hidden');
-
-  // Switch login/signup form
-  switchToSignupBtn.onclick = () => {
-    isSignupMode = !isSignupMode;
-    setAuthMode();
-  };
-
-  function setAuthMode() {
-    if (isSignupMode) {
-      authModalTitle.textContent = 'Sign Up';
-      authForm.querySelector('button').textContent = 'Sign Up';
-      switchToSignupBtn.textContent = 'Login instead';
-    } else {
-      authModalTitle.textContent = 'Login';
-      authForm.querySelector('button').textContent = 'Login';
-      switchToSignupBtn.textContent = 'Sign up';
-    }
-  }
-
-  // Auth form submit
-  authForm.onsubmit = e => {
-    e.preventDefault();
-    const email = authForm.authEmail.value.trim();
-    const password = authForm.authPassword.value;
-
-    if (isSignupMode) {
-      auth.createUserWithEmailAndPassword(email, password)
-        .then(userCred => {
-          currentUser = userCred.user;
-          showToast('Signed up successfully.', 'success');
-          authModal.classList.add('hidden');
-          afterLoginSetup();
-        })
-        .catch(err => showToast(err.message, 'error'));
-    } else {
-      auth.signInWithEmailAndPassword(email, password)
-        .then(userCred => {
-          currentUser = userCred.user;
-          showToast('Logged in successfully.', 'success');
-          authModal.classList.add('hidden');
-          afterLoginSetup();
-        })
-        .catch(err => showToast(err.message, 'error'));
-    }
-  };
-
-  // After login setup
-  function afterLoginSetup() {
-    authToggleBtn.textContent = 'Logged In';
-    authToggleBtn.disabled = true;
-    // Load profile picture
-    if(currentUser.photoURL) {
-      profilePicTop.src = currentUser.photoURL;
-      profilePicTop.classList.remove('hidden');
-    } else {
-      profilePicTop.classList.add('hidden');
-    }
-    setupDatabaseListener();
-  }
-
-  // Firebase auth state listener
-  auth.onAuthStateChanged(user => {
-    currentUser = user;
-    if (user) {
-      afterLoginSetup();
-    } else {
-      authToggleBtn.textContent = 'Login / Signup';
-      authToggleBtn.disabled = false;
-      profilePicTop.classList.add('hidden');
-      clearDatabaseTable();
-      currentDbEntries = [];
-      if(dbRef) dbRef.off();
-      dbRef = null;
-    }
-  });
-
-  // Setup realtime db listener
-  function setupDatabaseListener() {
-    if (!currentUser) return;
-    dbRef = database.ref(`users/${currentUser.uid}/orders`);
-    dbRef.on('value', snapshot => {
-      const data = snapshot.val() || {};
-      currentDbEntries = Object.values(data);
-      renderDatabaseTable();
-    });
-  }
-
-  // Add to database
-  dbForm.onsubmit = e => {
-    e.preventDefault();
-    if (!currentUser) {
-      showToast('Login required to add to database.', 'error');
-      return;
-    }
-    const clientName = dbForm.clientName.value.trim();
-    const phoneNumber = dbForm.phoneNumber.value.trim();
-    const product = dbForm.product.value.trim();
-    const quantity = Number(dbForm.quantity.value);
-
-    if (!clientName || !phoneNumber || !product || quantity <= 0) {
-      showToast('Please fill all fields correctly.', 'error');
-      return;
-    }
-
-    const newEntryRef = database.ref(`users/${currentUser.uid}/orders`).push();
-    newEntryRef.set({ clientName, phoneNumber, product, quantity })
-      .then(() => {
-        showToast('Order added!', 'success');
-        dbForm.reset();
-      })
-      .catch(() => showToast('Failed to add order.', 'error'));
-  };
-
-  // Render database table
-  function renderDatabaseTable() {
-    dbTableBody.innerHTML = '';
-    currentDbEntries.forEach((entry, i) => {
-      const tr = document.createElement('tr');
-      tr.className = 'border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700';
-      tr.innerHTML = `
-        <td class="px-4 py-3">${entry.clientName}</td>
-        <td class="px-4 py-3">${entry.phoneNumber}</td>
-        <td class="px-4 py-3">${entry.product}</td>
-        <td class="px-4 py-3">${entry.quantity}</td>
-        <td class="px-4 py-3 text-center">
-          <button class="delete-entry-btn bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded font-semibold" data-index="${i}">Delete</button>
-        </td>
-      `;
-      dbTableBody.appendChild(tr);
-    });
-
-    // Attach delete listeners
-    document.querySelectorAll('.delete-entry-btn').forEach(btn => {
-      btn.onclick = () => {
-        if(!currentUser) return;
-        const index = +btn.dataset.index;
-        const keyToDelete = Object.keys(currentDbEntries[index])[0];
-        // But we don't have keys in currentDbEntries? We need keys stored separately.
-        // Let's store keys along with entries when fetching
-        // So fix: store entries as [{key, data}, ...]
-      };
-    });
-  }
-
-  // Because we need keys for deletion, re-implement listener:
-  function setupDatabaseListener() {
-    if (!currentUser) return;
-    dbRef = database.ref(`users/${currentUser.uid}/orders`);
-    dbRef.on('value', snapshot => {
-      const data = snapshot.val() || {};
-      // Convert data object {key: value, ...} to array with keys
-      currentDbEntries = Object.entries(data).map(([key, val]) => ({ key, ...val }));
-      renderDatabaseTable();
-    });
-  }
-
-  // Render database table fix with keys for deletion:
-  function renderDatabaseTable() {
-    dbTableBody.innerHTML = '';
-    currentDbEntries.forEach((entry, i) => {
-      const tr = document.createElement('tr');
-      tr.className = 'border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700';
-      tr.innerHTML = `
-        <td class="px-4 py-3">${entry.clientName}</td>
-        <td class="px-4 py-3">${entry.phoneNumber}</td>
-        <td class="px-4 py-3">${entry.product}</td>
-        <td class="px-4 py-3">${entry.quantity}</td>
-        <td class="px-4 py-3 text-center">
-          <button class="delete-entry-btn bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded font-semibold" data-key="${entry.key}">Delete</button>
-        </td>
-      `;
-      dbTableBody.appendChild(tr);
-    });
-
-    // Attach delete listeners
-    document.querySelectorAll('.delete-entry-btn').forEach(btn => {
-      btn.onclick = () => {
-        if(!currentUser) {
-          showToast('Login required.', 'error');
-          return;
-        }
-        const key = btn.dataset.key;
-        if(confirm('Delete this order?')) {
-          database.ref(`users/${currentUser.uid}/orders/${key}`).remove()
-            .then(() => showToast('Order deleted.', 'success'))
-            .catch(() => showToast('Failed to delete order.', 'error'));
-        }
-      };
-    });
-  }
-
-  // Export JSON button
-  exportJsonBtn.onclick = () => {
-    if(!currentUser) {
-      showToast('Login required.', 'error');
-      return;
-    }
-    if(currentDbEntries.length === 0) {
-      showToast('No data to export.', 'info');
-      return;
-    }
-    const exportData = currentDbEntries.map(({key, ...rest}) => rest);
-    const jsonStr = JSON.stringify(exportData, null, 2);
-    navigator.clipboard.writeText(jsonStr).then(() => {
-      showToast('Database JSON copied to clipboard!', 'success');
-    }).catch(() => {
-      showToast('Failed to copy JSON.', 'error');
-    });
-  };
-
-  // Import JSON button
-  importJsonBtn.onclick = () => {
-    if(!currentUser) {
-      showToast('Login required.', 'error');
-      return;
-    }
-    try {
-      const importData = JSON.parse(jsonImport.value.trim());
-      if (!Array.isArray(importData)) throw new Error('Invalid JSON format - expected an array.');
-      // Clear existing db
-      database.ref(`users/${currentUser.uid}/orders`).remove()
-        .then(() => {
-          // Push new entries
-          const promises = importData.map(entry => {
-            if(typeof entry.clientName !== 'string' || typeof entry.phoneNumber !== 'string' || typeof entry.product !== 'string' || typeof entry.quantity !== 'number') {
-              throw new Error('Invalid data structure');
-            }
-            return database.ref(`users/${currentUser.uid}/orders`).push(entry);
-          });
-          return Promise.all(promises);
-        })
-        .then(() => {
-          showToast('Database imported successfully!', 'success');
-          jsonImport.value = '';
-        })
-        .catch(err => {
-          showToast(err.message, 'error');
-        });
-    } catch (e) {
-      showToast('Invalid JSON input.', 'error');
-    }
-  };
-
-  // Show DB Viewer button toggle
-  showDbViewerBtn.onclick = () => {
-    dbViewer.classList.toggle('hidden');
-    if (!dbViewer.classList.contains('hidden')) {
-      const exportData = currentDbEntries.map(({key, ...rest}) => rest);
-      dbViewer.textContent = JSON.stringify(exportData, null, 2);
-    }
-  };
-
-  // Email form submit
-  emailForm.onsubmit = e => {
-    e.preventDefault();
-    const email = emailInput.value.trim();
-    if(!email) {
-      emailStatus.textContent = 'Please enter a valid email.';
-      return;
-    }
-    emailStatus.textContent = 'Subscribed! Thank you.';
-    emailInput.value = '';
-  };
-
-  // Email Us button
-  emailUsBtn.onclick = () => {
-    window.location.href = 'mailto:support@smartordersapp.com';
-  };
-
-  // Save account data locally
-  saveAccountBtn.onclick = () => {
-    if(!currentUser) {
-      showToast('Login required.', 'error');
-      return;
-    }
-    const dataStr = JSON.stringify(currentDbEntries.map(({key, ...rest}) => rest));
-    localStorage.setItem(`smartOrders_${currentUser.uid}`, dataStr);
-    showToast('Data saved locally.', 'success');
-  };
-
-  // Load account data locally
-  loadAccountBtn.onclick = () => {
-    if(!currentUser) {
-      showToast('Login required.', 'error');
-      return;
-    }
-    const dataStr = localStorage.getItem(`smartOrders_${currentUser.uid}`);
-    if(!dataStr) {
-      showToast('No saved data found.', 'info');
-      return;
-    }
-    try {
-      const data = JSON.parse(dataStr);
-      if(!Array.isArray(data)) throw new Error('Invalid data');
-      // Clear existing db
-      database.ref(`users/${currentUser.uid}/orders`).remove()
-        .then(() => {
-          // Push new entries
-          const promises = data.map(entry => database.ref(`users/${currentUser.uid}/orders`).push(entry));
-          return Promise.all(promises);
-        })
-        .then(() => showToast('Data loaded from local storage.', 'success'))
-        .catch(() => showToast('Failed to load data.', 'error'));
-    } catch {
-      showToast('Invalid saved data.', 'error');
-    }
-  };
-
-  // Logout button
-  logoutBtn.onclick = () => {
-    auth.signOut()
-      .then(() => showToast('Logged out.', 'success'))
-      .catch(() => showToast('Logout failed.', 'error'));
-  };
-
-  // Delete account button
-  deleteAccountBtn.onclick = () => {
-    if(!currentUser) {
-      showToast('Login required.', 'error');
-      return;
-    }
-    if(confirm('Are you sure you want to delete your account and all data? This action cannot be undone.')) {
-      // Delete user data first
-      database.ref(`users/${currentUser.uid}`).remove()
-        .then(() => currentUser.delete())
-        .then(() => {
-          showToast('Account deleted.', 'success');
-        })
-        .catch(err => {
-          showToast(err.message, 'error');
-        });
-    }
-  };
+  (function() {
+    emailjs.init('27xvHIt7kuuZewPB3');
+  })();
 </script>
 
-<div id="toast-container" class="fixed bottom-5 right-5 space-y-2 z-50"></div>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // Initial State
+    let currentUser = null; // {email, profilePicDataUrl, database: [...]}
+    let database = [];
 
-</body>
-</html>
+    const tabs = document.querySelectorAll('button.tab-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
+    const authButtons = document.getElementById('auth-buttons');
+    const profilePicImg = document.getElementById('profile-pic');
+    const logoSection = document.getElementById('logo-section');
+
+    // Forms & UI elements
+    const loginForm = document.getElementById('login-form');
+    const signupForm = document.getElementById('signup-form');
+    const databaseTab = document.getElementById('database-tab');
+    const settingsTab = document.getElementById('settings-tab');
+    const accountTab = document.getElementById('account-tab');
+    const collabTab = document.getElementById('collab-tab');
+
+    const loginEmailInput = document.getElementById('login-email');
+    const loginPasswordInput = document.getElementById('login-password');
+    const loginMsg = document.getElementById('login-msg');
+
+    const signupEmailInput = document.getElementById('signup-email');
+    const signupPasswordInput = document.getElementById('signup-password');
+    const signupMsg = document.getElementById('signup-msg');
+
+    const dbForm = document.getElementById('db-form');
+    const dbTableBody = document.querySelector('#db-table tbody');
+    const exportDbBtn = document.getElementById('export-db');
+    const importDbInput = document.getElementById('import-db');
+
+    const darkModeToggle = document.getElementById('dark-mode-toggle');
+
+    const emailForm = document.getElementById('email-form');
+    const emailStatus = document.getElementById('email-status');
+
+    const extraEmailInput = document.getElementById('extra-email');
+    const extraEmailBtn = document.getElementById('extra-email-btn');
+    const extraEmailMsg = document.getElementById('extra-email-msg');
+
+    const profilePicInput = document.getElementById('profile-pic-input');
+
+    const saveDataBtn = document.getElementById('save-data-btn');
+    const loadDataBtn = document.getElementById('load-data-btn');
+    const deleteAccountBtn = document.getElementById('delete-account-btn');
+    const logoutBtn = document.getElementById('logout-btn');
+    const accountMsg = document.getElementById('account-msg');
+
+    // Auth Buttons
+    const btnLogin = document.getElementById('btn-login');
+    const btnSignup = document.getElementById('btn-signup');
+
+    // Utils - fake cloud save using localStorage for demo
+    function saveUserToCloud(user) {
+      localStorage.setItem('smartOrdersUser_' + user.email, JSON.stringify(user));
+    }
+    function loadUserFromCloud(email) {
+      const data = localStorage.getItem('smartOrdersUser_' + email);
+      if (!data) return null;
+      return JSON.parse(data);
+    }
+    function deleteUserFromCloud(email) {
+      localStorage.removeItem('smartOrdersUser_' + email);
+    }
+
+    // Update UI on login/logout
+    function updateUI() {
+      if(currentUser) {
+        authButtons.style.display = 'none';
+        // Show Database, Settings, Account tabs
+        tabs.forEach(t => t.style.display = 'inline-block');
+        // Show database tab active, hide login/signup forms
+        showTab('database-tab');
+        // Show profile pic if exists
+        if(currentUser.profilePicDataUrl) {
+          profilePicImg.src = currentUser.profilePicDataUrl;
+        } else {
+          profilePicImg.src = 'https://i.pravatar.cc/36';
+        }
+        // Load database from user
+        database = currentUser.database || [];
+        renderDatabase();
+        loginForm.classList.remove('active');
+        signupForm.classList.remove('active');
+      } else {
+        // No user logged in
+        authButtons.style.display = 'flex';
+        tabs.forEach(t => t.style.display = 'none');
+        hideAllTabs();
+        // Show login form by default
+        loginForm.classList.add('active');
+        signupForm.classList.remove('active');
+        profilePicImg.src = 'https://i.pravatar.cc/36';
+        database = [];
+        renderDatabase();
+      }
+    }
+
+    function showTab(id) {
+      tabContents.forEach(c => c.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+
+      tabs.forEach(t => {
+        if(t.dataset.tab === id) {
+          t.classList.add('active');
+        } else {
+          t.classList.remove('active');
+        }
+      });
+    }
+
+    function hideAllTabs() {
+      tabContents.forEach(c => c.classList.remove('active'));
+    }
+
+    // Tab button clicks
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        if(!currentUser) return; // no switching tabs without login
+        showTab(tab.dataset.tab);
+      });
+    });
+
+    // Auth buttons clicks
+    btnLogin.addEventListener('click', () => {
+      loginForm.classList.add('active');
+      signupForm.classList.remove('active');
+      hideAllTabs();
+    });
+    btnSignup.addEventListener('click', () => {
+      signupForm.classList.add('active');
+      loginForm.classList.remove('active');
+      hideAllTabs();
+    });
+
+    // Signup submit
+    document.getElementById('signup-submit').addEventListener('click', () => {
+      const email = signupEmailInput.value.trim().toLowerCase();
+      const pass = signupPasswordInput.value;
+      signupMsg.textContent = '';
+
+      if (!validateEmail(email)) {
+        signupMsg.textContent = 'Invalid email.';
+        return;
+      }
+      if(pass.length < 6){
+        signupMsg.textContent = 'Password too short.';
+        return;
+      }
+      // Check if user exists
+      if(loadUserFromCloud(email)) {
+        signupMsg.textContent = 'Email already registered.';
+        return;
+      }
+      // Create new user
+      currentUser = {
+        email,
+        password: pass,
+        profilePicDataUrl: '',
+        database: []
+      };
+      saveUserToCloud(currentUser);
+      signupMsg.style.color = 'green';
+      signupMsg.textContent = 'Account created! Logging in...';
+      setTimeout(() => {
+        signupMsg.textContent = '';
+        updateUI();
+      }, 1000);
+    });
+
+    // Login submit
+    document.getElementById('login-submit').addEventListener('click', () => {
+      const email = loginEmailInput.value.trim().toLowerCase();
+      const pass = loginPasswordInput.value;
+      loginMsg.textContent = '';
+
+      const user = loadUserFromCloud(email);
+      if(!user) {
+        loginMsg.textContent = 'No such user.';
+        return;
+      }
+      if(user.password !== pass) {
+        loginMsg.textContent = 'Incorrect password.';
+        return;
+      }
+      currentUser = user;
+      updateUI();
+    });
+
+    // Log out
+    logoutBtn.addEventListener('click', () => {
+      currentUser = null;
+      updateUI();
+    });
+
+    // Delete account and data
+    deleteAccountBtn.addEventListener('click', () => {
+      if(!currentUser) return;
+      if(confirm('Delete your account and all data? This cannot be undone.')) {
+        deleteUserFromCloud(currentUser.email);
+        currentUser = null;
+        updateUI();
