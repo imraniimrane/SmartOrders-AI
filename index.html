@@ -1,692 +1,250 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Smart Orders - Fully Functional</title>
-<style>
-  :root {
-    --cyan: #00bcd4;
-    --dark-bg: #121212;
-    --light-bg: #f5f5f5;
-    --dark-text: #eee;
-    --light-text: #222;
-  }
-  body {
-    margin: 0;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: var(--light-bg);
-    color: var(--light-text);
-    transition: background 0.3s, color 0.3s;
-  }
-  body.dark {
-    background: var(--dark-bg);
-    color: var(--dark-text);
-  }
-  header {
-    display: flex;
-    align-items: center;
-    background: var(--cyan);
-    color: white;
-    padding: 10px 20px;
-  }
-  #logo-section {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-weight: 700;
-    font-size: 1.3rem;
-    user-select: none;
-  }
-  #profile-pic {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 2px solid white;
-  }
-  nav {
-    display: flex;
-    gap: 15px;
-    margin-left: 40px;
-    flex-grow: 1;
-  }
-  nav button.tab-btn {
-    background: transparent;
-    border: none;
-    color: white;
-    font-weight: 600;
-    font-size: 1rem;
-    padding: 8px 12px;
-    cursor: pointer;
-    border-bottom: 3px solid transparent;
-    transition: border-color 0.25s;
-  }
-  nav button.tab-btn.active {
-    border-bottom: 3px solid white;
-  }
-  #auth-buttons {
-    display: flex;
-    gap: 15px;
-  }
-  #auth-buttons button {
-    background: white;
-    color: var(--cyan);
-    border: none;
-    padding: 7px 15px;
-    font-weight: 600;
-    border-radius: 20px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-  }
-  #auth-buttons button:hover {
-    background: #e0f7fa;
-  }
-  #btn-logout {
-    margin-left: 15px;
-  }
-  main {
-    padding: 20px;
-  }
-  .tab-content {
-    display: none;
-    max-width: 800px;
-  }
-  .tab-content.active {
-    display: block;
-  }
-  input, select, textarea {
-    width: 100%;
-    padding: 8px 10px;
-    margin: 8px 0 16px;
-    border: 1.8px solid #ccc;
-    border-radius: 6px;
-    font-size: 1rem;
-    transition: border-color 0.25s;
-  }
-  input:focus, select:focus, textarea:focus {
-    border-color: var(--cyan);
-    outline: none;
-  }
-  .btn {
-    background: var(--cyan);
-    color: white;
-    border: none;
-    padding: 10px 18px;
-    border-radius: 24px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background-color 0.3s;
-  }
-  .btn:hover {
-    background: #0097a7;
-  }
-  .btn-secondary {
-    background: #e0e0e0;
-    color: var(--cyan);
-  }
-  .btn-secondary:hover {
-    background: #b2ebf2;
-  }
-  .btn-danger {
-    background: #e53935;
-    color: white;
-  }
-  .btn-danger:hover {
-    background: #b71c1c;
-  }
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 10px;
-  }
-  th, td {
-    border: 1.5px solid #ccc;
-    padding: 10px;
-    text-align: left;
-  }
-  th {
-    background: var(--cyan);
-    color: white;
-  }
-  body.dark th {
-    background: #007c91;
-  }
-  label.checkbox-label {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-weight: 600;
-  }
-  input[type="checkbox"] {
-    width: 18px;
-    height: 18px;
-    cursor: pointer;
-  }
-  #profile-pic-input {
-    margin-top: 6px;
-  }
-  #email-status {
-    font-weight: 600;
-    margin-top: 8px;
-  }
-  p.message {
-    font-weight: 600;
-    margin-top: 4px;
-  }
-  p.message.error {
-    color: red;
-  }
-  p.message.success {
-    color: green;
-  }
-  .entry {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-    margin-bottom: 10px;
-  }
-  .entry input {
-    flex: 1 1 200px;
-  }
-</style>
+  <meta charset="UTF-8" />
+  <title>Database Manager with JSON & Excel</title>
+  <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    input, button {
+      padding: 5px 10px;
+      margin: 5px 0;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+    }
+    th {
+      background: #f4f4f4;
+    }
+    button.delete-btn {
+      background: #e74c3c;
+      color: white;
+      border: none;
+      cursor: pointer;
+      padding: 5px 10px;
+      border-radius: 3px;
+    }
+    button.delete-btn:hover {
+      background: #c0392b;
+    }
+    .controls > * {
+      margin-right: 10px;
+    }
+  </style>
 </head>
 <body>
-<header>
-  <div id="logo-section">
-    <img id="profile-pic" src="https://i.pravatar.cc/36" alt="Profile Picture" />
-    <div>Smart Orders</div>
+
+  <h1>Database Manager</h1>
+
+  <form id="add-form">
+    <input type="text" id="name" placeholder="Name" required />
+    <input type="email" id="email" placeholder="Email" required />
+    <button type="submit">Add Entry</button>
+  </form>
+
+  <div class="controls">
+    <button id="export-json">Export Database as JSON</button>
+    <button id="export-excel">Export Database as Excel</button>
+    <input type="file" id="import-db" accept=".json,.xlsx" />
+    <button id="clear-db">Clear Database</button>
   </div>
-  <nav>
-    <button class="tab-btn" data-tab="database-tab" disabled>Database</button>
-    <button class="tab-btn" data-tab="settings-tab" disabled>Settings</button>
-    <button class="tab-btn" data-tab="account-tab" disabled>Account</button>
-    <button class="tab-btn" data-tab="collab-tab" disabled>Collab</button>
-  </nav>
-  <div id="auth-buttons">
-    <button id="btn-login">Log In</button>
-    <button id="btn-signup">Sign Up</button>
-  </div>
-  <button id="btn-logout" class="btn-danger" style="display:none;">Log Out</button>
-</header>
 
-<main>
-  <!-- LOGIN FORM -->
-  <section id="login-form" class="tab-content active">
-    <h2>Log In</h2>
-    <input type="email" id="login-email" placeholder="Email" required />
-    <input type="password" id="login-password" placeholder="Password" required />
-    <button class="btn" id="login-submit">Log In</button>
-    <p id="login-msg" class="message error"></p>
-  </section>
+  <table id="db-table">
+    <thead>
+      <tr><th>Name</th><th>Email</th><th>Actions</th></tr>
+    </thead>
+    <tbody>
+      <!-- Database entries will go here -->
+    </tbody>
+  </table>
 
-  <!-- SIGNUP FORM -->
-  <section id="signup-form" class="tab-content">
-    <h2>Sign Up</h2>
-    <input type="email" id="signup-email" placeholder="Email" required />
-    <input type="password" id="signup-password" placeholder="Password (min 6 chars)" required />
-    <button class="btn" id="signup-submit">Sign Up</button>
-    <p id="signup-msg" class="message error"></p>
-  </section>
+  <script>
+    // Database array
+    let database = [];
 
-  <!-- DATABASE TAB -->
-  <section id="database-tab" class="tab-content">
-    <h2>Database</h2>
-    <form id="db-form">
-      <div id="entry-container">
-        <div class="entry">
-          <input type="text" name="client-name" placeholder="Client Name" required />
-          <input type="tel" name="phone-number" placeholder="Phone Number" required />
-          <input type="text" name="product" placeholder="Product" required />
-          <input type="number" name="quantity" placeholder="Quantity" min="1" required />
-        </div>
-      </div>
-      <button type="button" id="add-entry-btn" class="btn">+ Add Entry</button>
-      <button type="submit" class="btn">Add to Database</button>
-    </form>
+    // DOM elements
+    const form = document.getElementById('add-form');
+    const nameInput = document.getElementById('name');
+    const emailInput = document.getElementById('email');
+    const tableBody = document.querySelector('#db-table tbody');
+    const exportJsonBtn = document.getElementById('export-json');
+    const exportExcelBtn = document.getElementById('export-excel');
+    const importInput = document.getElementById('import-db');
+    const clearDbBtn = document.getElementById('clear-db');
 
-    <h3>Current Database</h3>
-    <table id="db-table">
-      <thead>
-        <tr><th>Client Name</th><th>Phone Number</th><th>Product</th><th>Quantity</th></tr>
-      </thead>
-      <tbody>
-        <!-- Data rows here -->
-      </tbody>
-    </table>
-
-    <div style="margin-top:15px;">
-      <button class="btn-secondary" id="export-db">Export Database (.json)</button>
-      <input type="file" id="import-db" accept=".json" style="margin-left:10px;" />
-    </div>
-  </section>
-
-  <!-- SETTINGS TAB -->
-  <section id="settings-tab" class="tab-content">
-    <h2>Settings</h2>
-    <label class="checkbox-label"><input type="checkbox" id="dark-mode-toggle" /> Dark Mode</label>
-    <hr />
-    <h3>Profile Picture</h3>
-    <input type="file" id="profile-pic-input" accept="image/*" />
-  </section>
-
-  <!-- ACCOUNT TAB -->
-  <section id="account-tab" class="tab-content">
-    <h2>Account</h2>
-    <p><strong>Email:</strong> <span id="account-email">-</span></p>
-    <button class="btn-danger" id="delete-account-btn">Delete Account</button>
-  </section>
-
-  <!-- COLLAB TAB -->
-  <section id="collab-tab" class="tab-content">
-    <h2>Collaborate</h2>
-    <p>Send your database via email:</p>
-    <input type="email" id="email-to" placeholder="Recipient Email" required />
-    <button class="btn" id="send-email-btn">Send Email</button>
-    <p id="email-status"></p>
-  </section>
-</main>
-
-<script>
-  // ==== Globals ====
-  let users = JSON.parse(localStorage.getItem('users')) || {};
-  let currentUser = JSON.parse(localStorage.getItem('currentUser')) || null;
-  let database = JSON.parse(localStorage.getItem('database')) || [];
-
-  // ==== DOM Elements ====
-  const tabs = document.querySelectorAll('button.tab-btn');
-  const loginForm = document.getElementById('login-form');
-  const signupForm = document.getElementById('signup-form');
-  const dbTab = document.getElementById('database-tab');
-  const settingsTab = document.getElementById('settings-tab');
-  const accountTab = document.getElementById('account-tab');
-  const collabTab = document.getElementById('collab-tab');
-
-  const btnLogin = document.getElementById('btn-login');
-  const btnSignup = document.getElementById('btn-signup');
-  const btnLogout = document.getElementById('btn-logout');
-
-  const loginEmailInput = document.getElementById('login-email');
-  const loginPasswordInput = document.getElementById('login-password');
-  const loginSubmit = document.getElementById('login-submit');
-  const loginMsg = document.getElementById('login-msg');
-
-  const signupEmailInput = document.getElementById('signup-email');
-  const signupPasswordInput = document.getElementById('signup-password');
-  const signupSubmit = document.getElementById('signup-submit');
-  const signupMsg = document.getElementById('signup-msg');
-
-  const entryContainer = document.getElementById('entry-container');
-  const dbForm = document.getElementById('db-form');
-  const dbTableBody = document.querySelector('#db-table tbody');
-
-  const addEntryBtn = document.getElementById('add-entry-btn');
-
-  const darkModeToggle = document.getElementById('dark-mode-toggle');
-  const profilePicInput = document.getElementById('profile-pic-input');
-  const profilePicImg = document.getElementById('profile-pic');
-
-  const accountEmailSpan = document.getElementById('account-email');
-  const deleteAccountBtn = document.getElementById('delete-account-btn');
-
-  const emailToInput = document.getElementById('email-to');
-  const sendEmailBtn = document.getElementById('send-email-btn');
-  const emailStatus = document.getElementById('email-status');
-
-  const authButtonsDiv = document.getElementById('auth-buttons');
-  const navButtons = document.querySelectorAll('nav button.tab-btn');
-
-  // ==== Utility Functions ====
-
-  function saveUsers() {
-    localStorage.setItem('users', JSON.stringify(users));
-  }
-  function saveCurrentUser() {
-    localStorage.setItem('currentUser', JSON.stringify(currentUser));
-  }
-  function saveDatabase() {
-    localStorage.setItem('database', JSON.stringify(database));
-  }
-
-  function showTab(tabId) {
-    // Hide all tab contents
-    document.querySelectorAll('.tab-content').forEach(tab => {
-      tab.classList.remove('active');
-    });
-
-    // Show selected tab
-    const tab = document.getElementById(tabId);
-    if (tab) tab.classList.add('active');
-
-    // Update nav button active state
-    navButtons.forEach(btn => {
-      btn.classList.toggle('active', btn.dataset.tab === tabId);
-    });
-  }
-
-  function updateUIForLoggedInUser() {
-    if(currentUser) {
-      // Hide login/signup buttons
-      authButtonsDiv.style.display = 'none';
-      btnLogout.style.display = 'inline-block';
-
-      // Enable nav buttons
-      navButtons.forEach(btn => btn.disabled = false);
-
-      // Show database tab by default
-      showTab('database-tab');
-
-      // Set account email
-      accountEmailSpan.textContent = currentUser.email;
-
-      // Update profile picture if available
-      if(currentUser.profilePic) {
-        profilePicImg.src = currentUser.profilePic;
-      } else {
-        profilePicImg.src = 'https://i.pravatar.cc/36';
-      }
-
-      // Apply dark mode setting
-      if(currentUser.settings?.darkMode) {
-        document.body.classList.add('dark');
-        darkModeToggle.checked = true;
-      } else {
-        document.body.classList.remove('dark');
-        darkModeToggle.checked = false;
-      }
-
-      // Load user's database if stored separately (optional)
-      // For now use global 'database'
-      renderDatabase();
-    } else {
-      // Show login/signup buttons
-      authButtonsDiv.style.display = 'flex';
-      btnLogout.style.display = 'none';
-
-      // Disable nav buttons
-      navButtons.forEach(btn => btn.disabled = true);
-
-      // Show login form by default
-      showTab('login-form');
-
-      // Clear database table
-      dbTableBody.innerHTML = '';
-    }
-  }
-
-  function renderDatabase() {
-    // Show all database entries in table
-    dbTableBody.innerHTML = '';
-    database.forEach(({clientName, phoneNumber, product, quantity}, i) => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${clientName}</td>
-        <td>${phoneNumber}</td>
-        <td>${product}</td>
-        <td>${quantity}</td>
-      `;
-      dbTableBody.appendChild(tr);
-    });
-  }
-
-  // ==== Event Listeners ====
-
-  // Tab navigation buttons
-  navButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      if(btn.disabled) return;
-      showTab(btn.dataset.tab);
-    });
-  });
-
-  // Login button shows login form
-  btnLogin.addEventListener('click', () => {
-    showTab('login-form');
-  });
-
-  // Signup button shows signup form
-  btnSignup.addEventListener('click', () => {
-    showTab('signup-form');
-  });
-
-  // Logout button clears currentUser
-  btnLogout.addEventListener('click', () => {
-    currentUser = null;
-    saveCurrentUser();
-    updateUIForLoggedInUser();
-  });
-
-  // LOGIN form submit
-  loginSubmit.addEventListener('click', () => {
-    const email = loginEmailInput.value.trim().toLowerCase();
-    const password = loginPasswordInput.value;
-
-    if(!email || !password) {
-      loginMsg.textContent = 'Please fill in both fields.';
-      return;
-    }
-
-    if(!users[email] || users[email].password !== password) {
-      loginMsg.textContent = 'Incorrect email or password.';
-      return;
-    }
-
-    currentUser = { email, ...users[email] };
-    saveCurrentUser();
-    loginMsg.textContent = '';
-    loginEmailInput.value = '';
-    loginPasswordInput.value = '';
-    updateUIForLoggedInUser();
-  });
-
-  // SIGNUP form submit
-  signupSubmit.addEventListener('click', () => {
-    const email = signupEmailInput.value.trim().toLowerCase();
-    const password = signupPasswordInput.value;
-
-    if(!email || !password) {
-      signupMsg.textContent = 'Please fill in both fields.';
-      return;
-    }
-    if(password.length < 6) {
-      signupMsg.textContent = 'Password must be at least 6 characters.';
-      return;
-    }
-    if(users[email]) {
-      signupMsg.textContent = 'Email already registered.';
-      return;
-    }
-
-    users[email] = {
-      password,
-      profilePic: null,
-      settings: { darkMode: false }
-    };
-    saveUsers();
-
-    currentUser = { email, ...users[email] };
-    saveCurrentUser();
-    signupMsg.textContent = '';
-    signupEmailInput.value = '';
-    signupPasswordInput.value = '';
-    updateUIForLoggedInUser();
-  });
-
-  // Add new entry input row
-  addEntryBtn.addEventListener('click', () => {
-    const newEntry = document.createElement('div');
-    newEntry.className = 'entry';
-    newEntry.innerHTML = `
-      <input type="text" name="client-name" placeholder="Client Name" required />
-      <input type="tel" name="phone-number" placeholder="Phone Number" required />
-      <input type="text" name="product" placeholder="Product" required />
-      <input type="number" name="quantity" placeholder="Quantity" min="1" required />
-    `;
-    entryContainer.appendChild(newEntry);
-  });
-
-  // Submit database form
-  dbForm.addEventListener('submit', e => {
-    e.preventDefault();
-    if(!currentUser) {
-      alert("Please log in to add entries.");
-      return;
-    }
-
-    const entries = Array.from(entryContainer.querySelectorAll('.entry'));
-    let valid = true;
-
-    entries.forEach(entry => {
-      const clientName = entry.querySelector('input[name="client-name"]').value.trim();
-      const phoneNumber = entry.querySelector('input[name="phone-number"]').value.trim();
-      const product = entry.querySelector('input[name="product"]').value.trim();
-      const quantity = parseInt(entry.querySelector('input[name="quantity"]').value, 10);
-
-      if(!clientName || !phoneNumber || !product || isNaN(quantity) || quantity < 1) {
-        valid = false;
-      } else {
-        database.push({ clientName, phoneNumber, product, quantity });
-      }
-    });
-
-    if(!valid) {
-      alert("Please fill out all fields correctly.");
-      return;
-    }
-
-    saveDatabase();
-    renderDatabase();
-
-    // Reset entries to one blank entry
-    entryContainer.innerHTML = `
-      <div class="entry">
-        <input type="text" name="client-name" placeholder="Client Name" required />
-        <input type="tel" name="phone-number" placeholder="Phone Number" required />
-        <input type="text" name="product" placeholder="Product" required />
-        <input type="number" name="quantity" placeholder="Quantity" min="1" required />
-      </div>
-    `;
-  });
-
-  // Dark mode toggle
-  darkModeToggle.addEventListener('change', () => {
-    if(darkModeToggle.checked) {
-      document.body.classList.add('dark');
-      if(currentUser) {
-        currentUser.settings = currentUser.settings || {};
-        currentUser.settings.darkMode = true;
-        users[currentUser.email].settings.darkMode = true;
-        saveUsers();
-        saveCurrentUser();
-      }
-    } else {
-      document.body.classList.remove('dark');
-      if(currentUser) {
-        currentUser.settings = currentUser.settings || {};
-        currentUser.settings.darkMode = false;
-        users[currentUser.email].settings.darkMode = false;
-        saveUsers();
-        saveCurrentUser();
-      }
-    }
-  });
-
-  // Profile picture upload
-  profilePicInput.addEventListener('change', e => {
-    if(!currentUser) return alert("Log in to upload a profile picture.");
-    const file = e.target.files[0];
-    if(!file) return;
-
-    const reader = new FileReader();
-    reader.onload = function(evt) {
-      profilePicImg.src = evt.target.result;
-      currentUser.profilePic = evt.target.result;
-      users[currentUser.email].profilePic = evt.target.result;
-      saveUsers();
-      saveCurrentUser();
-    };
-    reader.readAsDataURL(file);
-  });
-
-  // Delete account button
-  deleteAccountBtn.addEventListener('click', () => {
-    if(!currentUser) return;
-    if(confirm("Are you sure you want to delete your account? This action cannot be undone.")) {
-      delete users[currentUser.email];
-      saveUsers();
-      currentUser = null;
-      saveCurrentUser();
-      alert("Account deleted.");
-      updateUIForLoggedInUser();
-    }
-  });
-
-  // Export database to JSON file
-  document.getElementById('export-db').addEventListener('click', () => {
-    if(database.length === 0) {
-      alert("Database is empty.");
-      return;
-    }
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(database, null, 2));
-    const a = document.createElement('a');
-    a.href = dataStr;
-    a.download = 'database.json';
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-  });
-
-  // Import database JSON file
-  document.getElementById('import-db').addEventListener('change', e => {
-    const file = e.target.files[0];
-    if(!file) return;
-    const reader = new FileReader();
-    reader.onload = evt => {
-      try {
-        const importedData = JSON.parse(evt.target.result);
-        if(Array.isArray(importedData)) {
-          database = importedData;
-          saveDatabase();
-          renderDatabase();
-          alert("Database imported successfully.");
-        } else {
-          alert("Invalid database format.");
+    // Load database from localStorage on page load
+    function loadDatabase() {
+      const saved = localStorage.getItem('database');
+      if (saved) {
+        try {
+          database = JSON.parse(saved);
+        } catch {
+          database = [];
         }
-      } catch(err) {
-        alert("Error parsing JSON file.");
       }
-    };
-    reader.readAsText(file);
-  });
-
-  // Send database via email (fake/demo)
-  sendEmailBtn.addEventListener('click', () => {
-    const recipient = emailToInput.value.trim();
-    if(!recipient || !recipient.includes('@')) {
-      emailStatus.textContent = "Please enter a valid email address.";
-      emailStatus.style.color = 'red';
-      return;
     }
 
-    if(database.length === 0) {
-      emailStatus.textContent = "Database is empty.";
-      emailStatus.style.color = 'red';
-      return;
+    // Save database to localStorage
+    function saveDatabase() {
+      localStorage.setItem('database', JSON.stringify(database));
     }
 
-    // This is a placeholder. Real email sending requires backend.
-    emailStatus.textContent = "Sending email...";
-    emailStatus.style.color = 'black';
+    // Render the database table
+    function renderDatabase() {
+      tableBody.innerHTML = '';
+      database.forEach((entry, index) => {
+        const tr = document.createElement('tr');
 
-    setTimeout(() => {
-      emailStatus.textContent = "Email sent successfully (demo).";
-      emailStatus.style.color = 'green';
-    }, 2000);
-  });
+        const tdName = document.createElement('td');
+        tdName.textContent = entry.name;
+        tr.appendChild(tdName);
 
-  // Initialize UI
-  updateUIForLoggedInUser();
+        const tdEmail = document.createElement('td');
+        tdEmail.textContent = entry.email;
+        tr.appendChild(tdEmail);
 
-</script>
+        const tdActions = document.createElement('td');
+        const delBtn = document.createElement('button');
+        delBtn.textContent = 'Delete';
+        delBtn.className = 'delete-btn';
+        delBtn.addEventListener('click', () => {
+          if (confirm(`Delete entry for "${entry.name}"?`)) {
+            database.splice(index, 1);
+            saveDatabase();
+            renderDatabase();
+          }
+        });
+        tdActions.appendChild(delBtn);
+        tr.appendChild(tdActions);
+
+        tableBody.appendChild(tr);
+      });
+    }
+
+    // Add new entry from form
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      const name = nameInput.value.trim();
+      const email = emailInput.value.trim();
+
+      if (!name || !email) {
+        alert('Please fill in all fields.');
+        return;
+      }
+
+      // Simple email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        alert('Please enter a valid email.');
+        return;
+      }
+
+      database.push({ name, email });
+      saveDatabase();
+      renderDatabase();
+
+      form.reset();
+    });
+
+    // Export database as JSON
+    exportJsonBtn.addEventListener('click', () => {
+      if (database.length === 0) {
+        alert('Database is empty.');
+        return;
+      }
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(database, null, 2));
+      const a = document.createElement('a');
+      a.href = dataStr;
+      a.download = 'database.json';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    });
+
+    // Export database as Excel (.xlsx)
+    exportExcelBtn.addEventListener('click', () => {
+      if (database.length === 0) {
+        alert('Database is empty.');
+        return;
+      }
+      const ws = XLSX.utils.json_to_sheet(database);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Database");
+      XLSX.writeFile(wb, "database.xlsx");
+    });
+
+    // Import database file (JSON or Excel)
+    importInput.addEventListener('change', e => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+
+      if (file.name.endsWith('.json')) {
+        reader.onload = evt => {
+          try {
+            const importedData = JSON.parse(evt.target.result);
+            if (Array.isArray(importedData)) {
+              database = importedData;
+              saveDatabase();
+              renderDatabase();
+              alert('Database imported successfully from JSON.');
+            } else {
+              alert('Invalid database format in JSON.');
+            }
+          } catch (err) {
+            alert('Error parsing JSON file.');
+          }
+        };
+        reader.readAsText(file);
+
+      } else if (file.name.endsWith('.xlsx')) {
+        reader.onload = evt => {
+          const data = new Uint8Array(evt.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const firstSheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[firstSheetName];
+          const importedData = XLSX.utils.sheet_to_json(worksheet);
+
+          if (Array.isArray(importedData)) {
+            database = importedData;
+            saveDatabase();
+            renderDatabase();
+            alert('Database imported successfully from Excel.');
+          } else {
+            alert('Invalid Excel format.');
+          }
+        };
+        reader.readAsArrayBuffer(file);
+
+      } else {
+        alert('Unsupported file type. Please upload JSON or Excel (.xlsx) files.');
+      }
+
+      e.target.value = ''; // Reset input
+    });
+
+    // Clear entire database
+    clearDbBtn.addEventListener('click', () => {
+      if (confirm('Are you sure you want to clear the entire database?')) {
+        database = [];
+        saveDatabase();
+        renderDatabase();
+      }
+    });
+
+    // Initial load & render
+    loadDatabase();
+    renderDatabase();
+  </script>
 </body>
 </html>
