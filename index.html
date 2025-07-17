@@ -73,7 +73,7 @@
     display: block;
     margin: 15px 0 5px;
   }
-  input[type=text], input[type=password], textarea, select {
+  input[type=text], input[type=number], input[type=password], textarea, select {
     width: 100%;
     padding: 8px;
     font-size: 1em;
@@ -81,7 +81,7 @@
     border-radius: 4px;
     box-sizing: border-box;
   }
-  body.dark input[type=text], body.dark input[type=password], body.dark textarea, body.dark select {
+  body.dark input[type=text], body.dark input[type=number], body.dark input[type=password], body.dark textarea, body.dark select {
     background: #333;
     border: 1px solid #555;
     color: #eee;
@@ -202,6 +202,27 @@
   body.dark #server-info {
     color: #aaa;
   }
+  /* Add Data Form */
+  #add-data-form {
+    margin-top: 20px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit,minmax(140px,1fr));
+    gap: 10px 15px;
+    align-items: end;
+  }
+  #add-data-form label {
+    margin: 0 0 4px;
+    font-size: 0.9em;
+  }
+  #add-data-form input {
+    margin-top: 0;
+  }
+  #add-data-form button {
+    grid-column: span 1;
+    justify-self: start;
+    padding: 8px 16px;
+    font-weight: bold;
+  }
 </style>
 </head>
 <body>
@@ -245,6 +266,7 @@
   <section id="database-page" class="container" tabindex="0" aria-label="Database Table">
     <label for="db-select">Select Database:</label>
     <select id="db-select" style="margin-bottom: 15px;"></select>
+
     <table>
       <thead>
         <tr>
@@ -259,6 +281,28 @@
         <tr><td colspan="5">No database selected.</td></tr>
       </tbody>
     </table>
+
+    <form id="add-data-form" aria-label="Add data to database">
+      <div>
+        <label for="input-name">Client Name:</label>
+        <input type="text" id="input-name" required autocomplete="off" />
+      </div>
+      <div>
+        <label for="input-phone">Phone Number:</label>
+        <input type="text" id="input-phone" required autocomplete="off" />
+      </div>
+      <div>
+        <label for="input-product">Product:</label>
+        <input type="text" id="input-product" required autocomplete="off" />
+      </div>
+      <div>
+        <label for="input-qty">Quantity:</label>
+        <input type="number" id="input-qty" min="1" required autocomplete="off" />
+      </div>
+      <div>
+        <button type="submit">Add Data</button>
+      </div>
+    </form>
   </section>
 
   <section id="settings-page" class="container" style="display:none;" tabindex="0" aria-label="Settings">
@@ -312,6 +356,12 @@
   const dbList = document.getElementById('db-list');
   const dbSelect = document.getElementById('db-select');
   const tableBody = document.getElementById('data-table-body');
+
+  const addDataForm = document.getElementById('add-data-form');
+  const inputName = document.getElementById('input-name');
+  const inputPhone = document.getElementById('input-phone');
+  const inputProduct = document.getElementById('input-product');
+  const inputQty = document.getElementById('input-qty');
 
   // --- USER AUTHENTICATION ---
 
@@ -509,66 +559,112 @@
     if (dbs.length > 0) {
       dbSelect.value = dbs[0];
       renderTable(loadDatabase(currentUser, dbs[0]));
+      addDataForm.style.display = 'grid';
     } else {
       tableBody.innerHTML = '<tr><td colspan="5">No databases yet. Create one!</td></tr>';
+      addDataForm.style.display = 'none';
     }
   }
 
   function renderTable(rows) {
     tableBody.innerHTML = '';
     if (!rows || rows.length === 0) {
-      tableBody.innerHTML = '<tr><td colspan="5">No data in this database.</td></tr>';
+      tableBody.innerHTML = '<tr><td colspan="5">No data rows in this database.</td></tr>';
       return;
     }
     rows.forEach((row, i) => {
       const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${i + 1}</td>
-        <td>${row.name || ''}</td>
-        <td>${row.phone || ''}</td>
-        <td>${row.product || ''}</td>
-        <td>${row.qty || ''}</td>
-      `;
+      const rnTd = document.createElement('td');
+      rnTd.textContent = i + 1;
+      tr.appendChild(rnTd);
+
+      const nameTd = document.createElement('td');
+      nameTd.textContent = row.clientName || '';
+      tr.appendChild(nameTd);
+
+      const phoneTd = document.createElement('td');
+      phoneTd.textContent = row.phoneNumber || '';
+      tr.appendChild(phoneTd);
+
+      const productTd = document.createElement('td');
+      productTd.textContent = row.product || '';
+      tr.appendChild(productTd);
+
+      const qtyTd = document.createElement('td');
+      qtyTd.textContent = row.quantity || '';
+      tr.appendChild(qtyTd);
+
       tableBody.appendChild(tr);
     });
   }
 
+  // Create new database prompt
   btnCreateDb.addEventListener('click', () => {
-    const dbname = prompt('Enter new database name:');
-    if (!dbname) return;
-    if (dbname.includes(' ')) {
-      alert('Database name cannot contain spaces.');
+    const newDbName = prompt('Enter new database name (alphanumeric, no spaces):');
+    if (!newDbName) return;
+    if (!/^[a-zA-Z0-9_-]+$/.test(newDbName)) {
+      alert('Invalid name. Use letters, numbers, underscores or dashes only.');
       return;
     }
-    if (!currentUser) {
-      alert('No user logged in.');
+    const dbs = getDatabasesForUser(currentUser);
+    if (dbs.includes(newDbName)) {
+      alert('Database name already exists.');
       return;
     }
-    const key = `db-${currentUser}-${dbname}`;
-    if (localStorage.getItem(key)) {
-      alert('Database already exists.');
-      return;
-    }
-    saveDatabase(currentUser, dbname, []);
+    saveDatabase(currentUser, newDbName, []);
     updateDatabaseUI();
-    alert(`Database "${dbname}" created.`);
+    alert(`Database "${newDbName}" created!`);
   });
 
+  // On database selection change
   dbSelect.addEventListener('change', () => {
-    if (!currentUser) return;
-    const dbname = dbSelect.value;
-    if (!dbname) return;
-    const rows = loadDatabase(currentUser, dbname);
+    const selectedDb = dbSelect.value;
+    if (!selectedDb) {
+      tableBody.innerHTML = '<tr><td colspan="5">No database selected.</td></tr>';
+      addDataForm.style.display = 'none';
+      return;
+    }
+    const rows = loadDatabase(currentUser, selectedDb);
     renderTable(rows);
+    addDataForm.style.display = 'grid';
   });
 
-  // --- START APP AFTER LOGIN ---
+  // Add data form submission
+  addDataForm.addEventListener('submit', e => {
+    e.preventDefault();
+    const selectedDb = dbSelect.value;
+    if (!selectedDb) {
+      alert('Please select a database first.');
+      return;
+    }
+    const name = inputName.value.trim();
+    const phone = inputPhone.value.trim();
+    const product = inputProduct.value.trim();
+    const qty = Number(inputQty.value);
 
+    if (!name || !phone || !product || isNaN(qty) || qty < 1) {
+      alert('Please fill in all fields with valid data.');
+      return;
+    }
+
+    const rows = loadDatabase(currentUser, selectedDb);
+    rows.push({
+      clientName: name,
+      phoneNumber: phone,
+      product: product,
+      quantity: qty,
+    });
+    saveDatabase(currentUser, selectedDb, rows);
+    renderTable(rows);
+    addDataForm.reset();
+  });
+
+  // --- START APP after login ---
   function startApp() {
     authPage.style.display = 'none';
     mainApp.style.display = 'block';
-    setActivePage('db');
     updateDatabaseUI();
+    setActivePage('db');
   }
 </script>
 
